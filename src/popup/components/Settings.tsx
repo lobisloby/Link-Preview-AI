@@ -14,12 +14,22 @@ export const Settings: React.FC<SettingsProps> = ({
   subscription 
 }) => {
   const [newDomain, setNewDomain] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [saved, setSaved] = useState(false);
   const isPro = subscription?.tier !== 'free';
+
+  useEffect(() => {
+    chrome.storage.local.get('hf_api_key', (result) => {
+      if (result.hf_api_key) {
+        setApiKey(result.hf_api_key as string);
+      }
+    });
+  }, []);
 
   const handleAddDomain = () => {
     if (newDomain && !settings.excludedDomains.includes(newDomain)) {
       onUpdate({
-        excludedDomains: [...settings.excludedDomains, newDomain],
+        excludedDomains: [...settings.excludedDomains, newDomain.toLowerCase()],
       });
       setNewDomain('');
     }
@@ -31,11 +41,27 @@ export const Settings: React.FC<SettingsProps> = ({
     });
   };
 
+  const handleSaveApiKey = async () => {
+    await chrome.storage.local.set({ hf_api_key: apiKey });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  };
+
   return (
-    <div className="p-4 space-y-6">
+    <div style={{ padding: '16px' }}>
       {/* Hover Delay */}
-      <SettingGroup title="Hover Delay" description="Time before preview appears">
-        <div className="flex items-center gap-4">
+      <SettingSection title="Hover Delay" description="Time before preview appears">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <input
             type="range"
             min="200"
@@ -43,230 +69,257 @@ export const Settings: React.FC<SettingsProps> = ({
             step="100"
             value={settings.hoverDelay}
             onChange={(e) => onUpdate({ hoverDelay: Number(e.target.value) })}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+            style={{ 
+              flex: 1, 
+              height: '6px',
+              cursor: 'pointer',
+              accentColor: '#0284c7'
+            }}
           />
-          <span className="text-sm font-medium text-gray-700 w-16">
+          <span style={{ 
+            fontSize: '14px', 
+            fontWeight: 500, 
+            color: '#374151',
+            minWidth: '60px',
+            textAlign: 'right'
+          }}>
             {settings.hoverDelay}ms
           </span>
         </div>
-      </SettingGroup>
+      </SettingSection>
 
       {/* Display Options */}
-      <SettingGroup title="Display Options" description="Choose what to show in previews">
-        <div className="space-y-3">
-          <SettingToggle
+      <SettingSection title="Display Options" description="Choose what to show in previews">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <ToggleOption
             label="Show Category"
-            enabled={settings.showCategory}
-            onChange={(showCategory) => onUpdate({ showCategory })}
+            checked={settings.showCategory}
+            onChange={(v) => onUpdate({ showCategory: v })}
           />
-          <SettingToggle
+          <ToggleOption
             label="Show Sentiment"
-            enabled={settings.showSentiment}
-            onChange={(showSentiment) => onUpdate({ showSentiment })}
+            checked={settings.showSentiment}
+            onChange={(v) => onUpdate({ showSentiment: v })}
             locked={!isPro}
           />
-          <SettingToggle
+          <ToggleOption
             label="Show Key Points"
-            enabled={settings.showKeyPoints}
-            onChange={(showKeyPoints) => onUpdate({ showKeyPoints })}
+            checked={settings.showKeyPoints}
+            onChange={(v) => onUpdate({ showKeyPoints: v })}
             locked={!isPro}
           />
-          <SettingToggle
-            label="Show Reliability Score"
-            enabled={settings.showReliability}
-            onChange={(showReliability) => onUpdate({ showReliability })}
+          <ToggleOption
+            label="Show Reliability"
+            checked={settings.showReliability}
+            onChange={(v) => onUpdate({ showReliability: v })}
             locked={!isPro}
           />
         </div>
-      </SettingGroup>
-
-      {/* Theme */}
-      <SettingGroup title="Theme" description="Choose your preferred appearance">
-        <div className="flex gap-2">
-          {(['auto', 'light', 'dark'] as const).map((theme) => (
-            <button
-              key={theme}
-              onClick={() => onUpdate({ theme })}
-              className={`
-                flex-1 py-2 px-3 rounded-lg text-sm font-medium capitalize transition-colors
-                ${settings.theme === theme 
-                  ? 'bg-primary-100 text-primary-700 ring-2 ring-primary-600' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
-            >
-              {theme}
-            </button>
-          ))}
-        </div>
-      </SettingGroup>
-
-      {/* Excluded Domains */}
-      <SettingGroup title="Excluded Domains" description="Links from these domains won't show previews">
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newDomain}
-              onChange={(e) => setNewDomain(e.target.value)}
-              placeholder="example.com"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
-            />
-            <button
-              onClick={handleAddDomain}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
-            >
-              Add
-            </button>
-          </div>
-
-          {settings.excludedDomains.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {settings.excludedDomains.map((domain) => (
-                <span
-                  key={domain}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                >
-                  {domain}
-                  <button
-                    onClick={() => handleRemoveDomain(domain)}
-                    className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-gray-300 transition-colors"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </SettingGroup>
+      </SettingSection>
 
       {/* API Key */}
-      <SettingGroup title="Hugging Face API Key" description="Your API key for AI features">
-        <ApiKeyInput />
-      </SettingGroup>
+      <SettingSection title="Hugging Face API Key" description="Required for AI features">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="hf_xxxxxxxxxxxx"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            onClick={handleSaveApiKey}
+            style={{
+              padding: '10px 16px',
+              background: saved ? '#22c55e' : '#0284c7',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {saved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+        <p style={{ 
+          marginTop: '8px', 
+          fontSize: '12px', 
+          color: '#6b7280' 
+        }}>
+          Get your free key at{' '}
+          <a 
+            href="https://huggingface.co/settings/tokens" 
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#0284c7', textDecoration: 'none' }}
+          >
+            huggingface.co →
+          </a>
+        </p>
+      </SettingSection>
+
+      {/* Excluded Domains */}
+      <SettingSection title="Excluded Domains" description="Skip previews for these sites">
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <input
+            type="text"
+            value={newDomain}
+            onChange={(e) => setNewDomain(e.target.value)}
+            placeholder="example.com"
+            style={{ ...inputStyle, flex: 1 }}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+          />
+          <button
+            onClick={handleAddDomain}
+            style={{
+              padding: '10px 16px',
+              background: '#0284c7',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer'
+            }}
+          >
+            Add
+          </button>
+        </div>
+
+        {settings.excludedDomains.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {settings.excludedDomains.map((domain) => (
+              <span
+                key={domain}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 10px',
+                  background: '#f3f4f6',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  color: '#374151'
+                }}
+              >
+                {domain}
+                <button
+                  onClick={() => handleRemoveDomain(domain)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#9ca3af',
+                    fontSize: '16px',
+                    padding: 0,
+                    lineHeight: 1
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </SettingSection>
     </div>
   );
 };
 
-interface SettingGroupProps {
+// Setting Section Component
+interface SettingSectionProps {
   title: string;
   description: string;
   children: React.ReactNode;
 }
 
-const SettingGroup: React.FC<SettingGroupProps> = ({ title, description, children }) => (
-  <div className="space-y-2">
-    <div>
-      <h3 className="font-medium text-gray-900">{title}</h3>
-      <p className="text-xs text-gray-500">{description}</p>
-    </div>
+const SettingSection: React.FC<SettingSectionProps> = ({ title, description, children }) => (
+  <div style={{ marginBottom: '24px' }}>
+    <h3 style={{ 
+      fontSize: '14px', 
+      fontWeight: 600, 
+      color: '#111827',
+      marginBottom: '4px' 
+    }}>
+      {title}
+    </h3>
+    <p style={{ 
+      fontSize: '12px', 
+      color: '#6b7280',
+      marginBottom: '12px' 
+    }}>
+      {description}
+    </p>
     {children}
   </div>
 );
 
-interface SettingToggleProps {
+// Toggle Option Component
+interface ToggleOptionProps {
   label: string;
-  enabled: boolean;
-  onChange: (enabled: boolean) => void;
+  checked: boolean;
+  onChange: (value: boolean) => void;
   locked?: boolean;
 }
 
-const SettingToggle: React.FC<SettingToggleProps> = ({ 
+const ToggleOption: React.FC<ToggleOptionProps> = ({ 
   label, 
-  enabled, 
+  checked, 
   onChange,
   locked = false 
 }) => (
-  <label className={`flex items-center justify-between ${locked ? 'opacity-50' : ''}`}>
-    <span className="text-sm text-gray-700">
+  <div 
+    style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'space-between',
+      opacity: locked ? 0.5 : 1
+    }}
+  >
+    <span style={{ fontSize: '14px', color: '#374151' }}>
       {label}
       {locked && (
-        <span className="ml-2 text-xs text-primary-600 font-medium">PRO</span>
+        <span style={{ 
+          marginLeft: '8px', 
+          fontSize: '11px', 
+          color: '#0284c7',
+          fontWeight: 600 
+        }}>
+          PRO
+        </span>
       )}
     </span>
     <button
-      role="switch"
-      aria-checked={enabled}
+      onClick={() => !locked && onChange(!checked)}
       disabled={locked}
-      onClick={() => !locked && onChange(!enabled)}
-      className={`
-        relative inline-flex h-5 w-9 items-center rounded-full transition-colors
-        ${enabled ? 'bg-primary-600' : 'bg-gray-300'}
-        ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}
-      `}
+      style={{
+        position: 'relative',
+        width: '40px',
+        height: '22px',
+        background: checked ? '#0284c7' : '#d1d5db',
+        borderRadius: '11px',
+        border: 'none',
+        cursor: locked ? 'not-allowed' : 'pointer',
+        transition: 'background 0.2s',
+        padding: 0
+      }}
     >
       <span
-        className={`
-          inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform
-          ${enabled ? 'translate-x-4' : 'translate-x-1'}
-        `}
+        style={{
+          position: 'absolute',
+          top: '2px',
+          left: checked ? '20px' : '2px',
+          width: '18px',
+          height: '18px',
+          background: 'white',
+          borderRadius: '50%',
+          transition: 'left 0.2s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+        }}
       />
     </button>
-  </label>
+  </div>
 );
-
-const ApiKeyInput: React.FC = () => {
-  const [apiKey, setApiKey] = useState('');
-  const [saved, setSaved] = useState(false);
-  const [showKey, setShowKey] = useState(false);
-
-  useEffect(() => {
-    chrome.storage.local.get('hf_api_key', (result) => {
-      if (result.hf_api_key) {
-        setApiKey(result.hf_api_key as string);
-      }
-    });
-  }, []);
-
-  const handleSave = async () => {
-    await chrome.storage.local.set({ hf_api_key: apiKey });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <input
-            type={showKey ? 'text' : 'password'}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="hf_xxxxxxxxxxxx"
-            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
-          <button
-            type="button"
-            onClick={() => setShowKey(!showKey)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showKey ? '👁️' : '👁️‍🗨️'}
-          </button>
-        </div>
-        <button
-          onClick={handleSave}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            saved 
-              ? 'bg-green-500 text-white' 
-              : 'bg-primary-600 text-white hover:bg-primary-700'
-          }`}
-        >
-          {saved ? '✓ Saved' : 'Save'}
-        </button>
-      </div>
-      <p className="text-xs text-gray-500">
-        Get your free API key at{' '}
-        <a 
-          href="https://huggingface.co/settings/tokens" 
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary-600 hover:underline"
-        >
-          huggingface.co
-        </a>
-      </p>
-    </div>
-  );
-};

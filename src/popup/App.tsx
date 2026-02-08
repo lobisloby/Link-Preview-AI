@@ -45,35 +45,87 @@ export const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="w-[360px] h-[500px] flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+      <div 
+        style={{ 
+          width: '360px', 
+          height: '500px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          background: 'white'
+        }}
+      >
+        <div 
+          style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid #e5e7eb',
+            borderTopColor: '#0284c7',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}
+        />
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="w-[360px] min-h-[500px] bg-white flex flex-col">
+    <div 
+      style={{ 
+        width: '360px', 
+        minHeight: '500px', 
+        maxHeight: '600px',
+        display: 'flex', 
+        flexDirection: 'column',
+        background: 'white',
+        overflow: 'hidden'
+      }}
+    >
       <Header settings={settings} onToggle={updateSettings} />
       
       {/* Navigation */}
-      <nav className="flex border-b border-gray-200">
+      <nav style={{ 
+        display: 'flex', 
+        borderBottom: '1px solid #e5e7eb',
+        background: 'white'
+      }}>
         {(['home', 'settings', 'subscription'] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 px-4 py-3 text-sm font-medium capitalize transition-colors
-              ${activeTab === tab 
-                ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50/50' 
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
+            style={{
+              flex: 1,
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontWeight: 500,
+              textTransform: 'capitalize',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              background: activeTab === tab ? 'rgba(14, 165, 233, 0.05)' : 'transparent',
+              color: activeTab === tab ? '#0284c7' : '#6b7280',
+              borderBottom: activeTab === tab ? '2px solid #0284c7' : '2px solid transparent',
+            }}
           >
+            {tab === 'home' && '🏠 '}
+            {tab === 'settings' && '⚙️ '}
+            {tab === 'subscription' && '⭐ '}
             {tab}
           </button>
         ))}
       </nav>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}>
         {activeTab === 'home' && (
           <Stats subscription={subscription} />
         )}
@@ -95,17 +147,25 @@ export const App: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Link Preview AI v1.0.0</span>
-          <a 
-            href="https://linkpreviewai.com/help" 
-            target="_blank"
-            className="hover:text-primary-600"
-          >
-            Help & Feedback
-          </a>
-        </div>
+      <footer style={{
+        padding: '12px 16px',
+        borderTop: '1px solid #e5e7eb',
+        background: '#f9fafb',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '12px',
+        color: '#6b7280'
+      }}>
+        <span>Link Preview AI v1.0.0</span>
+        <a 
+          href="https://linkpreviewai.com/help" 
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#0284c7', textDecoration: 'none' }}
+        >
+          Help & Feedback
+        </a>
       </footer>
     </div>
   );

@@ -1,8 +1,6 @@
 // src/popup/components/Subscription.tsx
 import React, { useState } from 'react';
 import { UserSubscription } from '@shared/types';
-import { lemonSqueezyService } from '@shared/api/lemonSqueezy';
-import { SUBSCRIPTION_LIMITS } from '@shared/constants';
 
 interface SubscriptionProps {
   subscription: UserSubscription | null;
@@ -14,31 +12,7 @@ export const Subscription: React.FC<SubscriptionProps> = ({
   onRefresh 
 }) => {
   const [licenseKey, setLicenseKey] = useState('');
-  const [validating, setValidating] = useState(false);
   const [error, setError] = useState('');
-
-  const handleActivate = async () => {
-    if (!licenseKey.trim()) return;
-    
-    setValidating(true);
-    setError('');
-    
-    try {
-      const result = await lemonSqueezyService.validateLicense(licenseKey);
-      
-      if (result) {
-        await chrome.storage.sync.set({ subscription: result });
-        onRefresh();
-        setLicenseKey('');
-      } else {
-        setError('Invalid license key. Please check and try again.');
-      }
-    } catch (err) {
-      setError('Failed to validate license. Please try again.');
-    } finally {
-      setValidating(false);
-    }
-  };
 
   const plans = [
     {
@@ -46,8 +20,7 @@ export const Subscription: React.FC<SubscriptionProps> = ({
       name: 'Free',
       price: '$0',
       period: 'forever',
-      features: ['25 previews/day', 'Basic summarization', 'Link categorization'],
-      current: subscription?.tier === 'free',
+      features: ['25 previews/day', 'Basic summaries', 'Category detection'],
     },
     {
       id: 'pro',
@@ -59,46 +32,43 @@ export const Subscription: React.FC<SubscriptionProps> = ({
         'Advanced AI analysis',
         'Sentiment detection',
         'Key points extraction',
-        'Reliability scoring',
-        'Multi-language support',
         'Priority support',
       ],
-      current: subscription?.tier === 'pro',
       popular: true,
-    },
-    {
-      id: 'team',
-      name: 'Team',
-      price: '$15',
-      period: '/month',
-      features: [
-        'Unlimited previews',
-        'Everything in Pro',
-        'Team management',
-        'Usage analytics',
-        'Custom branding',
-        'API access',
-        'Dedicated support',
-      ],
-      current: subscription?.tier === 'team',
     },
   ];
 
   return (
-    <div className="p-4 space-y-6">
+    <div style={{ padding: '16px' }}>
       {/* Current Plan */}
-      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4">
-        <div className="flex items-center justify-between">
+      <div 
+        style={{
+          background: 'linear-gradient(135deg, #f0f9ff 0%, #fdf4ff 100%)',
+          borderRadius: '16px',
+          padding: '16px',
+          marginBottom: '20px'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p className="text-sm text-gray-500">Current Plan</p>
-            <p className="text-xl font-bold text-gray-900 capitalize">
+            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+              Current Plan
+            </p>
+            <p style={{ 
+              fontSize: '20px', 
+              fontWeight: 700, 
+              color: '#111827',
+              textTransform: 'capitalize' 
+            }}>
               {subscription?.tier || 'Free'}
             </p>
           </div>
-          {subscription?.tier !== 'free' && subscription?.expiresAt && (
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Renews on</p>
-              <p className="font-medium text-gray-900">
+          {subscription?.tier === 'pro' && subscription.expiresAt && (
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                Renews
+              </p>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>
                 {new Date(subscription.expiresAt).toLocaleDateString()}
               </p>
             </div>
@@ -106,89 +76,156 @@ export const Subscription: React.FC<SubscriptionProps> = ({
         </div>
       </div>
 
-      {/* Plans Grid */}
-      <div className="space-y-3">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className={`
-              relative rounded-xl border-2 p-4 transition-all
-              ${plan.current 
-                ? 'border-primary-500 bg-primary-50/50' 
-                : 'border-gray-200 hover:border-gray-300'
-              }
-              ${plan.popular && !plan.current ? 'ring-2 ring-accent-500 ring-offset-2' : ''}
-            `}
-          >
-            {plan.popular && !plan.current && (
-              <span className="absolute -top-2 left-4 px-2 py-0.5 bg-accent-500 text-white text-xs font-medium rounded-full">
-                Popular
-              </span>
-            )}
-
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {plan.price}
-                  <span className="text-sm font-normal text-gray-500">
-                    {plan.period}
-                  </span>
-                </p>
-              </div>
-              
-              {plan.current ? (
-                <span className="px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded-full">
-                  Current
-                </span>
-              ) : plan.id !== 'free' && (
-                <button
-                  onClick={() => {
-                    const url = lemonSqueezyService.getCheckoutUrl(plan.id as 'pro' | 'team');
-                    chrome.tabs.create({ url });
+      {/* Plans */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+        {plans.map((plan) => {
+          const isCurrent = subscription?.tier === plan.id;
+          
+          return (
+            <div
+              key={plan.id}
+              style={{
+                position: 'relative',
+                border: isCurrent ? '2px solid #0284c7' : '1px solid #e5e7eb',
+                borderRadius: '12px',
+                padding: '16px',
+                background: isCurrent ? 'rgba(14, 165, 233, 0.05)' : 'white'
+              }}
+            >
+              {plan.popular && !isCurrent && (
+                <span 
+                  style={{
+                    position: 'absolute',
+                    top: '-10px',
+                    left: '16px',
+                    padding: '2px 10px',
+                    background: '#c026d3',
+                    color: 'white',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '10px'
                   }}
-                  className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
                 >
-                  Upgrade
-                </button>
+                  POPULAR
+                </span>
               )}
-            </div>
 
-            <ul className="mt-3 space-y-1">
-              {plan.features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                  <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'flex-start',
+                marginBottom: '12px'
+              }}>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
+                    {plan.name}
+                  </h3>
+                  <p style={{ fontSize: '24px', fontWeight: 700, color: '#111827' }}>
+                    {plan.price}
+                    <span style={{ fontSize: '14px', fontWeight: 400, color: '#6b7280' }}>
+                      {plan.period}
+                    </span>
+                  </p>
+                </div>
+                
+                {isCurrent ? (
+                  <span 
+                    style={{
+                      padding: '6px 12px',
+                      background: '#0284c7',
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      borderRadius: '20px'
+                    }}
+                  >
+                    Current
+                  </span>
+                ) : plan.id !== 'free' && (
+                  <button
+                    style={{
+                      padding: '8px 16px',
+                      background: '#0284c7',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Upgrade
+                  </button>
+                )}
+              </div>
+
+              <ul style={{ 
+                listStyle: 'none', 
+                padding: 0, 
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}>
+                {plan.features.map((feature, i) => (
+                  <li 
+                    key={i}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px',
+                      fontSize: '13px',
+                      color: '#4b5563'
+                    }}
+                  >
+                    <span style={{ color: '#22c55e' }}>✓</span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
 
-      {/* License Key Activation */}
-      <div className="border-t border-gray-200 pt-4">
-        <h3 className="font-medium text-gray-900 mb-2">Have a license key?</h3>
-        <div className="flex gap-2">
+      {/* License Key */}
+      <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '16px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>
+          Have a license key?
+        </h3>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
             value={licenseKey}
             onChange={(e) => setLicenseKey(e.target.value)}
             placeholder="Enter license key"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            style={{
+              flex: 1,
+              padding: '10px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              fontSize: '14px'
+            }}
           />
           <button
-            onClick={handleActivate}
-            disabled={validating || !licenseKey.trim()}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              padding: '10px 16px',
+              background: '#0284c7',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer'
+            }}
           >
-            {validating ? 'Validating...' : 'Activate'}
+            Activate
           </button>
         </div>
         {error && (
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+          <p style={{ marginTop: '8px', fontSize: '13px', color: '#ef4444' }}>
+            {error}
+          </p>
         )}
       </div>
     </div>
