@@ -7,7 +7,7 @@ export interface LinkPreview {
   keyPoints: string[];
   category: LinkCategory;
   sentiment: Sentiment;
-  reliability: number; // 0-100
+  reliability: number;
   language: string;
   timestamp: number;
 }
@@ -28,7 +28,7 @@ export type Sentiment = 'positive' | 'neutral' | 'negative' | 'mixed';
 
 export interface UserSettings {
   enabled: boolean;
-  hoverDelay: number; // milliseconds
+  hoverDelay: number;
   showKeyPoints: boolean;
   showCategory: boolean;
   showSentiment: boolean;
@@ -36,7 +36,7 @@ export interface UserSettings {
   theme: 'light' | 'dark' | 'auto';
   language: string;
   excludedDomains: string[];
-  maxCacheAge: number; // hours
+  maxCacheAge: number;
 }
 
 export interface UserSubscription {
@@ -45,6 +45,22 @@ export interface UserSubscription {
   previewsUsed: number;
   previewsLimit: number;
   lemonSqueezyId?: string;
+}
+
+export interface UserStats {
+  previewsToday: number;
+  previewsLimit: number;
+  tier: 'free' | 'pro' | 'team';
+  limitReached: boolean;
+  resetTime: number;
+}
+
+export interface PreviewResponse {
+  success: boolean;
+  data?: LinkPreview;
+  error?: string;
+  limitReached?: boolean;
+  remainingPreviews?: number;
 }
 
 export interface ApiResponse<T> {
@@ -65,7 +81,12 @@ export type MessageType =
   | 'UPDATE_SETTINGS'
   | 'GET_SETTINGS'
   | 'CHECK_SUBSCRIPTION'
-  | 'INCREMENT_USAGE';
+  | 'GET_STATS'
+  | 'CHECK_LIMIT'
+  | 'INCREMENT_USAGE'
+  | 'LIMIT_REACHED'
+  | 'LIMIT_RESET'
+  | 'OPEN_UPGRADE';
 
 export interface Message<T = unknown> {
   type: MessageType;

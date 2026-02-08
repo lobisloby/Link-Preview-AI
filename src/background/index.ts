@@ -1,17 +1,17 @@
 // src/background/index.ts
-import { Message, LinkPreview, UserSettings } from '@shared/types';
+import { Message, LinkPreview, UserSettings, PreviewResponse } from '@shared/types';
 import { DEFAULT_SETTINGS } from '@shared/constants';
 import { getHuggingFaceService } from '@shared/api/huggingface';
-import { lemonSqueezyService } from '@shared/api/lemonSqueezy';
-import { PreviewCache } from '@shared/utils/cache';
-
-// Initialize cache
-const cache = PreviewCache.getInstance();
-
-// Define storage result type
-interface SettingsStorage {
-  settings?: UserSettings;
-}
+import { 
+  getSettings, 
+  saveSettings, 
+  getSubscription, 
+  getUsageStats,
+  checkLimit,
+  incrementUsage,
+  getCachedPreview,
+  setCachedPreview,
+} from '@shared/storage';
 
 // Message handler
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
@@ -19,10 +19,13 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
     .then(sendResponse)
     .catch((error) => {
       console.error('Message handler error:', error);
-      sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+      sendResponse({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     });
   
-  return true; // Indicates async response
+  return true; // Keep channel open for async response
 });
 
 async function handleMessage(
@@ -34,36 +37,65 @@ async function handleMessage(
       return await handleGetPreview(message.payload as string);
     
     case 'GET_SETTINGS':
-      return await handleGetSettings();
+      return await getSettings();
     
     case 'UPDATE_SETTINGS':
-      return await handleUpdateSettings(message.payload as Partial<UserSettings>);
+      return await saveSettings(message.payload as Partial<UserSettings>);
     
     case 'CHECK_SUBSCRIPTION':
-      return await lemonSqueezyService.getDefaultSubscription();
+      return await getSubscription();
+    
+    case 'GET_STATS':
+      return await getUsageStats();
+    
+    case 'CHECK_LIMIT':
+      return await checkLimit();
     
     case 'INCREMENT_USAGE':
-      return await lemonSqueezyService.incrementUsage();
+      return await incrementUsage();
+    
+    case 'OPEN_UPGRADE':
+      chrome.tabs.create({ url: chrome.runtime.getURL('options.html#upgrade') });
+      return { success: true };
     
     default:
       throw new Error(`Unknown message type: ${message.type}`);
   }
 }
 
-async function handleGetPreview(url: string): Promise<{ success: boolean; data?: LinkPreview; error?: string }> {
+async function handleGetPreview(url: string): Promise<PreviewResponse> {
   try {
-    // Check cache first
-    const cached = await cache.get(url);
-    if (cached) {
-      return { success: true, data: cached };
-    }
-
-    // Check usage limits
-    const canUse = await lemonSqueezyService.incrementUsage();
-    if (!canUse) {
+    // Check limit first
+    const limitCheck = await checkLimit();
+    
+    if (!limitCheck.canUse) {
       return { 
         success: false, 
-        error: 'Daily preview limit reached. Upgrade for more previews!' 
+        limitReached: true,
+        remainingPreviews: 0,
+        error: 'Daily preview limit reached',
+      };
+    }
+
+    // Check cache
+    const cached = await getCachedPreview(url);
+    if (cached) {
+      return { 
+        success: true, 
+        data: cached as LinkPreview,
+        remainingPreviews: limitCheck.remaining,
+      };
+    }
+
+    // Increment usage before making API call
+    const usageResult = await incrementUsage();
+    
+    if (!usageResult.success) {
+      return { 
+        success: false, 
+        limitReached: true,
+        remainingPreviews: 0,
+        error: 'Daily preview limit reached',
       };
     }
 
@@ -72,49 +104,35 @@ async function handleGetPreview(url: string): Promise<{ success: boolean; data?:
     const preview = await service.getFullPreview(url);
 
     // Cache the result
-    await cache.set(url, preview);
+    await setCachedPreview(url, preview);
 
-    return { success: true, data: preview };
+    return { 
+      success: true, 
+      data: preview,
+      remainingPreviews: usageResult.remaining,
+      limitReached: usageResult.limitReached,
+    };
   } catch (error) {
     console.error('Preview error:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
-}
-
-async function handleGetSettings(): Promise<UserSettings> {
-  const result: SettingsStorage = await chrome.storage.sync.get('settings');
-  
-  if (result.settings) {
-    return { ...DEFAULT_SETTINGS, ...result.settings };
-  }
-  
-  return DEFAULT_SETTINGS;
-}
-
-async function handleUpdateSettings(updates: Partial<UserSettings>): Promise<UserSettings> {
-  const current = await handleGetSettings();
-  const newSettings: UserSettings = { ...current, ...updates };
-  await chrome.storage.sync.set({ settings: newSettings });
-  return newSettings;
 }
 
 // Extension installation handler
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
-    // Set default settings
-    await chrome.storage.sync.set({ settings: DEFAULT_SETTINGS });
+    await saveSettings(DEFAULT_SETTINGS);
     
-    // Open welcome page
     chrome.tabs.create({
       url: chrome.runtime.getURL('options.html?welcome=true'),
     });
   }
 });
 
-// Context menu for manual preview (optional - only if contextMenus is available)
+// Context menu (optional)
 try {
   if (chrome.contextMenus) {
     chrome.contextMenus.create({
@@ -135,6 +153,5 @@ try {
     });
   }
 } catch (e) {
-  // Context menus might not be available
   console.log('Context menus not available');
 }

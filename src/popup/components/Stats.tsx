@@ -1,7 +1,8 @@
 // src/popup/components/Stats.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserSubscription } from '@shared/types';
 import { theme } from '@shared/theme';
+import { formatTimeUntilReset } from '@shared/storage';
 import { 
   BarChart3, 
   Crown, 
@@ -10,7 +11,9 @@ import {
   ShieldCheck, 
   Zap, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 interface StatsProps {
@@ -18,28 +21,76 @@ interface StatsProps {
 }
 
 export const Stats: React.FC<StatsProps> = ({ subscription }) => {
+  const [resetTime, setResetTime] = useState<string>('');
+
+  useEffect(() => {
+    const updateResetTime = async () => {
+      try {
+        const stats = await chrome.runtime.sendMessage({ type: 'GET_STATS' });
+        if (stats?.resetTime) {
+          setResetTime(formatTimeUntilReset(stats.resetTime));
+        }
+      } catch (error) {
+        console.error('Failed to get stats:', error);
+      }
+    };
+
+    updateResetTime();
+    
+    // Update every minute
+    const interval = setInterval(updateResetTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (!subscription) return null;
 
   const usagePercent = subscription.previewsLimit > 0
     ? (subscription.previewsUsed / subscription.previewsLimit) * 100
     : 0;
 
+  const limitReached = subscription.previewsLimit > 0 && 
+                       subscription.previewsUsed >= subscription.previewsLimit;
+
   const getProgressColor = (): string => {
+    if (usagePercent >= 100) return theme.accent.error;
     if (usagePercent >= 90) return theme.accent.error;
     if (usagePercent >= 70) return theme.accent.warning;
     return theme.accent.primary;
   };
 
+  const remaining = Math.max(0, subscription.previewsLimit - subscription.previewsUsed);
+
   return (
     <div style={styles.container}>
+      {/* Limit Reached Banner */}
+      {limitReached && (
+        <div style={styles.limitBanner}>
+          <div style={styles.limitBannerContent}>
+            <AlertCircle size={20} color={theme.accent.warning} />
+            <div style={styles.limitBannerText}>
+              <strong>Daily limit reached</strong>
+              <span>Resets in {resetTime || 'a few hours'}</span>
+            </div>
+          </div>
+          <RefreshCw size={16} color={theme.text.muted} />
+        </div>
+      )}
+
       {/* Usage Card */}
-      <div style={styles.card}>
+      <div style={{
+        ...styles.card,
+        borderColor: limitReached ? `${theme.accent.warning}50` : theme.border.default,
+      }}>
         <div style={styles.cardGlow} />
 
         <div style={styles.cardHeader}>
           <div style={styles.cardHeaderLeft}>
-            <div style={styles.iconWrapper}>
-              <BarChart3 size={18} color={theme.accent.primary} />
+            <div style={{
+              ...styles.iconWrapper,
+              background: limitReached ? `${theme.accent.warning}15` : `${theme.accent.primary}15`,
+              borderColor: limitReached ? `${theme.accent.warning}30` : `${theme.accent.primary}30`,
+            }}>
+              <BarChart3 size={18} color={limitReached ? theme.accent.warning : theme.accent.primary} />
             </div>
             <span style={styles.cardTitle}>Today's Usage</span>
           </div>
@@ -57,12 +108,25 @@ export const Stats: React.FC<StatsProps> = ({ subscription }) => {
 
         <div style={styles.statsRow}>
           <div style={styles.statNumber}>
-            <span style={styles.statValue}>{subscription.previewsUsed}</span>
+            <span style={{
+              ...styles.statValue,
+              color: limitReached ? theme.accent.warning : theme.text.primary,
+            }}>
+              {subscription.previewsUsed}
+            </span>
             <span style={styles.statLimit}>
               / {subscription.previewsLimit === -1 ? '∞' : subscription.previewsLimit}
             </span>
           </div>
-          <span style={styles.statLabel}>previews today</span>
+          <span style={styles.statLabel}>
+            {limitReached ? (
+              <span style={{ color: theme.accent.warning }}>
+                No previews remaining
+              </span>
+            ) : (
+              `${remaining} preview${remaining !== 1 ? 's' : ''} remaining`
+            )}
+          </span>
         </div>
 
         {subscription.previewsLimit > 0 && (
@@ -79,55 +143,78 @@ export const Stats: React.FC<StatsProps> = ({ subscription }) => {
                 }}
               />
             </div>
-            <span style={styles.progressPercent}>{Math.round(usagePercent)}%</span>
+            <span style={{
+              ...styles.progressPercent,
+              color: limitReached ? theme.accent.warning : theme.text.secondary,
+            }}>
+              {Math.round(usagePercent)}%
+            </span>
+          </div>
+        )}
+
+        {/* Reset Timer */}
+        {limitReached && resetTime && (
+          <div style={styles.resetInfo}>
+            <Clock size={14} color={theme.text.muted} />
+            <span>Resets in {resetTime}</span>
           </div>
         )}
       </div>
 
-      {/* Tips */}
-      <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>
-          <Sparkles size={16} color={theme.accent.warning} />
-          Quick Tips
-        </h3>
+      {/* Tips - Only show if not at limit */}
+      {!limitReached && (
+        <div style={styles.section}>
+          <h3 style={styles.sectionTitle}>
+            <Sparkles size={16} color={theme.accent.warning} />
+            Quick Tips
+          </h3>
 
-        <div style={styles.tipsList}>
-          <TipCard
-            icon={<Clock size={18} color={theme.accent.primary} />}
-            title="Hover to Preview"
-            desc="Hover over any link to see instant previews"
-            accent={theme.accent.primary}
-          />
-          <TipCard
-            icon={<Brain size={18} color={theme.accent.secondary} />}
-            title="AI-Powered Analysis"
-            desc="Smart summaries using advanced AI models"
-            accent={theme.accent.secondary}
-          />
-          <TipCard
-            icon={<ShieldCheck size={18} color={theme.accent.success} />}
-            title="Stay Safe Online"
-            desc="Reliability scores before clicking links"
-            accent={theme.accent.success}
-          />
+          <div style={styles.tipsList}>
+            <TipCard
+              icon={<Clock size={18} color={theme.accent.primary} />}
+              title="Hover to Preview"
+              desc="Hover over any link to see instant previews"
+              accent={theme.accent.primary}
+            />
+            <TipCard
+              icon={<Brain size={18} color={theme.accent.secondary} />}
+              title="AI-Powered Analysis"
+              desc="Smart summaries using advanced AI models"
+              accent={theme.accent.secondary}
+            />
+            <TipCard
+              icon={<ShieldCheck size={18} color={theme.accent.success} />}
+              title="Stay Safe Online"
+              desc="Reliability scores before clicking links"
+              accent={theme.accent.success}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Upgrade CTA */}
-      {subscription.tier === 'free' && (
-        <div style={styles.upgradeCard}>
+      {/* Upgrade CTA - Show prominently when limit reached */}
+      {(subscription.tier === 'free' || limitReached) && (
+        <div style={{
+          ...styles.upgradeCard,
+          borderColor: limitReached ? theme.accent.primary : `${theme.accent.primary}40`,
+        }}>
           <div style={styles.upgradeGlow} />
           <div style={styles.upgradeContent}>
             <div style={styles.upgradeHeader}>
               <Zap size={20} color={theme.accent.primary} />
-              <h3 style={styles.upgradeTitle}>Upgrade to Pro</h3>
+              <h3 style={styles.upgradeTitle}>
+                {limitReached ? 'Need More Previews?' : 'Upgrade to Pro'}
+              </h3>
             </div>
             <p style={styles.upgradeDesc}>
-              Unlimited previews, advanced AI features & priority support
+              {limitReached 
+                ? 'Get unlimited previews and never hit the limit again!'
+                : 'Unlimited previews, advanced AI features & priority support'
+              }
             </p>
             <button style={styles.upgradeButton}>
               <Crown size={16} />
-              <span>View Plans</span>
+              <span>{limitReached ? 'Upgrade Now' : 'View Plans'}</span>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -160,14 +247,36 @@ const TipCard: React.FC<TipCardProps> = ({ icon, title, desc, accent }) => (
   </div>
 );
 
-const PADDING_X = '16px';
-
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    padding: `16px ${PADDING_X}`,
+    padding: '16px',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
+  },
+
+  limitBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    background: `${theme.accent.warning}10`,
+    border: `1px solid ${theme.accent.warning}30`,
+    borderRadius: theme.radius.lg,
+  },
+
+  limitBannerContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+
+  limitBannerText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    fontSize: '13px',
+    color: theme.text.primary,
   },
 
   card: {
@@ -208,12 +317,11 @@ const styles: Record<string, React.CSSProperties> = {
   iconWrapper: {
     width: '36px',
     height: '36px',
-    background: `${theme.accent.primary}15`,
     borderRadius: theme.radius.md,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: `1px solid ${theme.accent.primary}30`,
+    border: '1px solid',
     flexShrink: 0,
   },
 
@@ -250,7 +358,6 @@ const styles: Record<string, React.CSSProperties> = {
   statValue: {
     fontSize: '40px',
     fontWeight: 800,
-    color: theme.text.primary,
     lineHeight: 1,
   },
 
@@ -287,10 +394,20 @@ const styles: Record<string, React.CSSProperties> = {
   progressPercent: {
     fontSize: '12px',
     fontWeight: 600,
-    color: theme.text.secondary,
     minWidth: '38px',
     textAlign: 'right',
     flexShrink: 0,
+  },
+
+  resetInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginTop: '16px',
+    paddingTop: '16px',
+    borderTop: `1px solid ${theme.border.default}`,
+    fontSize: '12px',
+    color: theme.text.muted,
   },
 
   section: {
@@ -358,7 +475,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: theme.bg.secondary,
     borderRadius: theme.radius.xl,
     padding: '20px',
-    border: `1px solid ${theme.accent.primary}40`,
+    border: `1px solid`,
     position: 'relative',
     overflow: 'hidden',
   },
