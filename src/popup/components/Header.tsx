@@ -1,7 +1,8 @@
-// src/popup/components/Header.tsx - Cleaner version
+// src/popup/components/Header.tsx
 import React from 'react';
 import { UserSettings } from '@shared/types';
-import { Zap, ZapOff } from 'lucide-react';
+import { theme } from '@shared/theme';
+import { Zap, ZapOff, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   settings: UserSettings;
@@ -12,121 +13,251 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
   const iconUrl = chrome.runtime.getURL('icons/icon48.png');
 
   return (
-    <header
-      style={{
-        background: 'linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%)',
-        padding: '20px',
-        color: 'white',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Decorative circle */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-40px',
-          right: '-40px',
-          width: '120px',
-          height: '120px',
-          background: 'rgba(255,255,255,0.1)',
-          borderRadius: '50%',
-        }}
-      />
+    <header style={styles.header}>
+      {/* Background Glow Effects */}
+      <div style={styles.glowBlue} />
+      <div style={styles.glowPurple} />
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
+      {/* Main Content */}
+      <div style={styles.content}>
         {/* Logo & Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Icon Container */}
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              border: '2px solid rgba(255,255,255,0.3)',
-            }}
-          >
-            <img
-              src={iconUrl}
-              alt="Link Preview AI"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
+        <div style={styles.logoSection}>
+          <div style={styles.logoContainer}>
+            <img 
+              src={iconUrl} 
+              alt="Link Preview AI" 
+              style={styles.logoImage}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
               }}
             />
           </div>
-
-          <div>
-            <h1
-              style={{
-                fontSize: '17px',
-                fontWeight: 700,
-                margin: 0,
-                lineHeight: 1.2,
-              }}
-            >
+          
+          <div style={styles.titleSection}>
+            <h1 style={styles.title}>
               Link Preview AI
+              <Sparkles 
+                size={14} 
+                color={theme.accent.warning} 
+                fill={theme.accent.warning}
+                style={{ marginLeft: '8px', flexShrink: 0 }}
+              />
             </h1>
-            <p
-              style={{
-                fontSize: '12px',
-                margin: '3px 0 0 0',
-                opacity: 0.85,
-                fontWeight: 500,
-              }}
-            >
-              Know before you click
-            </p>
+            <p style={styles.subtitle}>Know before you click</p>
           </div>
         </div>
-
+        
         {/* Toggle Button */}
         <button
           onClick={() => onToggle({ enabled: !settings.enabled })}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 16px',
-            background: settings.enabled
-              ? 'rgba(255,255,255,0.95)'
-              : 'rgba(255,255,255,0.2)',
-            color: settings.enabled ? '#7c3aed' : 'white',
-            border: 'none',
-            borderRadius: '24px',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '13px',
-            transition: 'all 0.2s ease',
-            boxShadow: settings.enabled
-              ? '0 4px 12px rgba(0,0,0,0.15)'
+            ...styles.toggleButton,
+            background: settings.enabled 
+              ? theme.gradient.primary
+              : theme.bg.tertiary,
+            boxShadow: settings.enabled 
+              ? theme.shadow.glow
               : 'none',
           }}
         >
           {settings.enabled ? (
-            <>
-              <Zap size={16} fill="currentColor" />
-              Active
-            </>
+            <Zap size={16} fill="white" color="white" />
           ) : (
-            <>
-              <ZapOff size={16} />
-              Paused
-            </>
+            <ZapOff size={16} color={theme.text.muted} />
           )}
+          <span style={{
+            ...styles.toggleText,
+            color: settings.enabled ? 'white' : theme.text.muted,
+          }}>
+            {settings.enabled ? 'ON' : 'OFF'}
+          </span>
         </button>
       </div>
+
+      {/* Status Bar */}
+      <div style={styles.statusBar}>
+        <div style={styles.statusLeft}>
+          <span 
+            style={{
+              ...styles.statusDot,
+              background: settings.enabled ? theme.accent.success : theme.text.muted,
+              boxShadow: settings.enabled 
+                ? `0 0 10px ${theme.accent.success}` 
+                : 'none',
+            }}
+          />
+          <span style={styles.statusText}>
+            {settings.enabled ? 'Active on all websites' : 'Extension paused'}
+          </span>
+        </div>
+        <span style={styles.version}>v1.0.0</span>
+      </div>
+
+      {/* Bottom Gradient Line */}
+      <div style={styles.gradientLine} />
     </header>
   );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  header: {
+    background: theme.bg.secondary,
+    position: 'relative',
+    overflow: 'hidden',
+    borderBottom: `1px solid ${theme.border.default}`,
+  },
+
+  glowBlue: {
+    position: 'absolute',
+    top: '-80px',
+    left: '-40px',
+    width: '200px',
+    height: '200px',
+    background: `radial-gradient(circle, ${theme.accent.primary}20, transparent 70%)`,
+    borderRadius: '50%',
+    pointerEvents: 'none',
+  },
+
+  glowPurple: {
+    position: 'absolute',
+    top: '-60px',
+    right: '-60px',
+    width: '180px',
+    height: '180px',
+    background: `radial-gradient(circle, ${theme.accent.secondary}15, transparent 70%)`,
+    borderRadius: '50%',
+    pointerEvents: 'none',
+  },
+
+  content: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 16px',
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  logoSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flex: 1,
+    minWidth: 0,
+  },
+
+  logoContainer: {
+    width: '48px',
+    height: '48px',
+    background: theme.bg.tertiary,
+    borderRadius: theme.radius.lg,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `1px solid ${theme.border.light}`,
+    boxShadow: theme.shadow.md,
+    padding: '8px',
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    borderRadius: theme.radius.sm,
+  },
+
+  titleSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    minWidth: 0,
+  },
+
+  title: {
+    fontSize: '17px',
+    fontWeight: 700,
+    margin: 0,
+    lineHeight: 1.2,
+    color: theme.text.primary,
+    display: 'flex',
+    alignItems: 'center',
+    letterSpacing: '-0.3px',
+  },
+
+  subtitle: {
+    fontSize: '12px',
+    margin: 0,
+    color: theme.text.secondary,
+    fontWeight: 500,
+  },
+
+  toggleButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 16px',
+    border: 'none',
+    borderRadius: theme.radius.full,
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '13px',
+    transition: 'all 0.3s ease',
+    flexShrink: 0,
+    marginLeft: '12px',
+  },
+
+  toggleText: {
+    letterSpacing: '0.5px',
+    fontWeight: 700,
+  },
+
+  statusBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    background: theme.bg.primary,
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  statusLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+
+  statusDot: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    transition: 'all 0.3s ease',
+    flexShrink: 0,
+  },
+
+  statusText: {
+    fontSize: '12px',
+    fontWeight: 500,
+    color: theme.text.secondary,
+  },
+
+  version: {
+    fontSize: '11px',
+    color: theme.text.muted,
+    fontWeight: 500,
+    flexShrink: 0,
+  },
+
+  gradientLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '2px',
+    background: theme.gradient.primary,
+    zIndex: 2,
+  },
 };
