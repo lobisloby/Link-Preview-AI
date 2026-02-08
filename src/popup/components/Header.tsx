@@ -1,6 +1,8 @@
+// src/popup/components/Header.tsx
 import React from 'react';
 import { UserSettings } from '@shared/types';
-import { Link2, Power } from 'lucide-react';
+import { theme } from '@shared/theme';
+import { Zap, ZapOff, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   settings: UserSettings;
@@ -8,126 +10,131 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
+  const iconUrl = chrome.runtime.getURL('icons/icon48.png');
+
   return (
     <header style={styles.header}>
-      {/* Background Blur Effect */}
-      <div style={styles.bgBlur} />
-      <div style={styles.bgBlur2} />
+      {/* Background Glow Effects */}
+      <div style={styles.glowBlue} />
+      <div style={styles.glowPurple} />
 
       {/* Main Content */}
       <div style={styles.content}>
         {/* Logo & Title */}
         <div style={styles.logoSection}>
           <div style={styles.logoContainer}>
-            <Link2 size={24} color="white" strokeWidth={2.5} />
+            <img 
+              src={iconUrl} 
+              alt="Link Preview AI" 
+              style={styles.logoImage}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
           </div>
           
           <div style={styles.titleSection}>
             <h1 style={styles.title}>
               Link Preview AI
+              <Sparkles 
+                size={14} 
+                color={theme.accent.warning} 
+                fill={theme.accent.warning}
+                style={{ marginLeft: '8px', flexShrink: 0 }}
+              />
             </h1>
-            <p style={styles.subtitle}>
-              Smart link previews
-            </p>
+            <p style={styles.subtitle}>Know before you click</p>
           </div>
         </div>
         
-        {/* Toggle Switch */}
-        <div style={styles.toggleContainer}>
-          <span style={styles.toggleLabel}>
+        {/* Toggle Button */}
+        <button
+          onClick={() => onToggle({ enabled: !settings.enabled })}
+          style={{
+            ...styles.toggleButton,
+            background: settings.enabled 
+              ? theme.gradient.primary
+              : theme.bg.tertiary,
+            boxShadow: settings.enabled 
+              ? theme.shadow.glow
+              : 'none',
+          }}
+        >
+          {settings.enabled ? (
+            <Zap size={16} fill="white" color="white" />
+          ) : (
+            <ZapOff size={16} color={theme.text.muted} />
+          )}
+          <span style={{
+            ...styles.toggleText,
+            color: settings.enabled ? 'white' : theme.text.muted,
+          }}>
             {settings.enabled ? 'ON' : 'OFF'}
           </span>
-          <button
-            onClick={() => onToggle({ enabled: !settings.enabled })}
-            style={{
-              ...styles.toggle,
-              background: settings.enabled 
-                ? 'rgba(255, 255, 255, 0.95)' 
-                : 'rgba(255, 255, 255, 0.2)',
-            }}
-            aria-label={settings.enabled ? 'Disable' : 'Enable'}
-          >
-            <span
-              style={{
-                ...styles.toggleKnob,
-                left: settings.enabled ? '26px' : '4px',
-                background: settings.enabled 
-                  ? 'linear-gradient(135deg, #0ea5e9, #8b5cf6)' 
-                  : 'rgba(255, 255, 255, 0.9)',
-              }}
-            >
-              <Power 
-                size={12} 
-                color={settings.enabled ? 'white' : '#94a3b8'} 
-                strokeWidth={2.5}
-              />
-            </span>
-          </button>
-        </div>
+        </button>
       </div>
 
       {/* Status Bar */}
       <div style={styles.statusBar}>
-        <div style={styles.statusIndicator}>
+        <div style={styles.statusLeft}>
           <span 
             style={{
               ...styles.statusDot,
-              background: settings.enabled ? '#4ade80' : '#94a3b8',
+              background: settings.enabled ? theme.accent.success : theme.text.muted,
               boxShadow: settings.enabled 
-                ? '0 0 8px rgba(74, 222, 128, 0.6)' 
+                ? `0 0 10px ${theme.accent.success}` 
                 : 'none',
             }}
           />
           <span style={styles.statusText}>
-            {settings.enabled ? 'Active on all websites' : 'Extension is paused'}
+            {settings.enabled ? 'Active on all websites' : 'Extension paused'}
           </span>
         </div>
-        
-        <div style={styles.version}>
-          v1.0.0
-        </div>
+        <span style={styles.version}>v1.0.0</span>
       </div>
+
+      {/* Bottom Gradient Line */}
+      <div style={styles.gradientLine} />
     </header>
   );
 };
 
-// Styles object for cleaner code
 const styles: Record<string, React.CSSProperties> = {
   header: {
-    background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #a855f7 100%)',
-    padding: '0',
-    color: 'white',
+    background: theme.bg.secondary,
     position: 'relative',
     overflow: 'hidden',
+    borderBottom: `1px solid ${theme.border.default}`,
   },
 
-  bgBlur: {
+  glowBlue: {
     position: 'absolute',
-    top: '-50px',
-    right: '-50px',
-    width: '150px',
-    height: '150px',
-    background: 'rgba(255, 255, 255, 0.1)',
+    top: '-80px',
+    left: '-40px',
+    width: '200px',
+    height: '200px',
+    background: `radial-gradient(circle, ${theme.accent.primary}20, transparent 70%)`,
     borderRadius: '50%',
-    filter: 'blur(40px)',
+    pointerEvents: 'none',
   },
 
-  bgBlur2: {
+  glowPurple: {
     position: 'absolute',
-    bottom: '-30px',
-    left: '-30px',
-    width: '100px',
-    height: '100px',
-    background: 'rgba(255, 255, 255, 0.08)',
+    top: '-60px',
+    right: '-60px',
+    width: '180px',
+    height: '180px',
+    background: `radial-gradient(circle, ${theme.accent.secondary}15, transparent 70%)`,
     borderRadius: '50%',
-    filter: 'blur(30px)',
+    pointerEvents: 'none',
   },
 
   content: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '20px',
+    padding: '20px 16px',
     position: 'relative',
     zIndex: 1,
   },
@@ -135,26 +142,38 @@ const styles: Record<string, React.CSSProperties> = {
   logoSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '14px',
+    gap: '12px',
+    flex: 1,
+    minWidth: 0,
   },
 
   logoContainer: {
     width: '48px',
     height: '48px',
-    background: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: '14px',
+    background: theme.bg.tertiary,
+    borderRadius: theme.radius.lg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+    border: `1px solid ${theme.border.light}`,
+    boxShadow: theme.shadow.md,
+    padding: '8px',
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    borderRadius: theme.radius.sm,
   },
 
   titleSection: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '2px',
+    gap: '4px',
+    minWidth: 0,
   },
 
   title: {
@@ -162,69 +181,53 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     margin: 0,
     lineHeight: 1.2,
+    color: theme.text.primary,
+    display: 'flex',
+    alignItems: 'center',
     letterSpacing: '-0.3px',
   },
 
   subtitle: {
     fontSize: '12px',
     margin: 0,
-    opacity: 0.85,
+    color: theme.text.secondary,
     fontWeight: 500,
   },
 
-  toggleContainer: {
+  toggleButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-  },
-
-  toggleLabel: {
-    fontSize: '11px',
-    fontWeight: 700,
-    opacity: 0.9,
-    letterSpacing: '0.5px',
-  },
-
-  toggle: {
-    position: 'relative',
-    width: '52px',
-    height: '28px',
-    borderRadius: '14px',
+    gap: '8px',
+    padding: '10px 16px',
     border: 'none',
+    borderRadius: theme.radius.full,
     cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    padding: 0,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    fontWeight: 600,
+    fontSize: '13px',
+    transition: 'all 0.3s ease',
+    flexShrink: 0,
+    marginLeft: '12px',
   },
 
-  toggleKnob: {
-    position: 'absolute',
-    top: '4px',
-    width: '20px',
-    height: '20px',
-    borderRadius: '50%',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+  toggleText: {
+    letterSpacing: '0.5px',
+    fontWeight: 700,
   },
 
   statusBar: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '10px 20px',
-    background: 'rgba(0, 0, 0, 0.1)',
-    backdropFilter: 'blur(10px)',
+    padding: '12px 16px',
+    background: theme.bg.primary,
     position: 'relative',
     zIndex: 1,
   },
 
-  statusIndicator: {
+  statusLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '10px',
   },
 
   statusDot: {
@@ -232,17 +235,29 @@ const styles: Record<string, React.CSSProperties> = {
     height: '8px',
     borderRadius: '50%',
     transition: 'all 0.3s ease',
+    flexShrink: 0,
   },
 
   statusText: {
     fontSize: '12px',
     fontWeight: 500,
-    opacity: 0.95,
+    color: theme.text.secondary,
   },
 
   version: {
     fontSize: '11px',
-    opacity: 0.7,
+    color: theme.text.muted,
     fontWeight: 500,
+    flexShrink: 0,
+  },
+
+  gradientLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '2px',
+    background: theme.gradient.primary,
+    zIndex: 2,
   },
 };

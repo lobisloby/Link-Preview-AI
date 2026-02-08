@@ -6,8 +6,8 @@ import { Stats } from './components/Stats';
 import { Subscription } from './components/Subscription';
 import { UserSettings, UserSubscription } from '@shared/types';
 import { DEFAULT_SETTINGS } from '@shared/constants';
-import { Home, Settings as SettingsIcon, Star } from '@shared/components/Icons';
-
+import { theme } from '@shared/theme';
+import { Home, Settings as SettingsIcon, Crown } from 'lucide-react';
 
 type Tab = 'home' | 'settings' | 'subscription';
 
@@ -47,100 +47,57 @@ export const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div 
-        style={{ 
-          width: '360px', 
-          height: '500px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          background: 'white'
-        }}
-      >
-        <div 
-          style={{
-            width: '32px',
-            height: '32px',
-            border: '3px solid #e5e7eb',
-            borderTopColor: '#0284c7',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}
-        />
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div style={styles.loadingContainer}>
+        <div style={styles.spinner} />
+        <p style={styles.loadingText}>Loading...</p>
+        <style>{scrollbarStyles}</style>
       </div>
     );
   }
 
+  const tabs = [
+    { id: 'home' as Tab, label: 'Home', icon: Home },
+    { id: 'settings' as Tab, label: 'Settings', icon: SettingsIcon },
+    { id: 'subscription' as Tab, label: 'Plans', icon: Crown },
+  ];
+
   return (
-    <div 
-      style={{ 
-        width: '360px', 
-        minHeight: '500px', 
-        maxHeight: '600px',
-        display: 'flex', 
-        flexDirection: 'column',
-        background: 'white',
-        overflow: 'hidden'
-      }}
-    >
+    <div style={styles.container}>
+      {/* Inject scrollbar styles */}
+      <style>{scrollbarStyles}</style>
+      
+      {/* Header */}
       <Header settings={settings} onToggle={updateSettings} />
       
       {/* Navigation */}
-      <nav style={{ 
-        display: 'flex', 
-        borderBottom: '1px solid #e5e7eb',
-        background: 'white'
-      }}>
-        {[
-          { id: 'home', label: 'Home', icon: <Home size={16} /> },
-          { id: 'settings', label: 'Settings', icon: <SettingsIcon size={16} /> },
-          { id: 'subscription', label: 'Plans', icon: <Star size={16} /> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as Tab)}
-            style={{
-              flex: 1,
-              padding: '14px 16px',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              background: activeTab === tab.id 
-                ? 'linear-gradient(to bottom, rgba(14, 165, 233, 0.05), transparent)' 
-                : 'transparent',
-              color: activeTab === tab.id ? '#0284c7' : '#6b7280',
-              borderBottom: activeTab === tab.id 
-                ? '2px solid #0284c7' 
-                : '2px solid transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+      <nav style={styles.nav}>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                ...styles.navButton,
+                background: isActive ? `${theme.accent.primary}15` : 'transparent',
+                color: isActive ? theme.accent.primary : theme.text.secondary,
+                borderBottom: isActive 
+                  ? `2px solid ${theme.accent.primary}` 
+                  : `2px solid transparent`,
+              }}
+            >
+              <Icon size={16} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      {/* Content */}
-      <div style={{ 
-        flex: 1, 
-        overflowY: 'auto',
-        overflowX: 'hidden'
-      }}>
-        {activeTab === 'home' && (
-          <Stats subscription={subscription} />
-        )}
-        
+      {/* Content - with custom scrollbar */}
+      <div style={styles.content}>
+        {activeTab === 'home' && <Stats subscription={subscription} />}
         {activeTab === 'settings' && (
           <Settings 
             settings={settings} 
@@ -148,36 +105,141 @@ export const App: React.FC = () => {
             subscription={subscription}
           />
         )}
-        
         {activeTab === 'subscription' && (
-          <Subscription 
-            subscription={subscription}
-            onRefresh={loadData}
-          />
+          <Subscription subscription={subscription} onRefresh={loadData} />
         )}
       </div>
 
       {/* Footer */}
-      <footer style={{
-        padding: '12px 16px',
-        borderTop: '1px solid #e5e7eb',
-        background: '#f9fafb',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: '12px',
-        color: '#6b7280'
-      }}>
-        <span>Link Preview AI v1.0.0</span>
-        <a 
-          href="https://linkpreviewai.com/help" 
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: '#0284c7', textDecoration: 'none' }}
-        >
-          Help & Feedback
-        </a>
+      <footer style={styles.footer}>
+        <span>Link Preview AI</span>
+        <span style={styles.footerDot}>•</span>
+        <span>v1.0.0</span>
       </footer>
     </div>
   );
+};
+
+// Scrollbar CSS injected via style tag
+const scrollbarStyles = `
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #0f172a;
+  }
+  
+  /* Chrome, Edge, Safari */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #0f172a;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: #0f172a;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    width: '380px',
+    minHeight: '520px',
+    maxHeight: '600px',
+    background: theme.bg.primary,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+
+  loadingContainer: {
+    width: '380px',
+    height: '520px',
+    background: theme.bg.primary,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+
+  spinner: {
+    width: '36px',
+    height: '36px',
+    border: `3px solid ${theme.bg.tertiary}`,
+    borderTopColor: theme.accent.primary,
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+  },
+
+  loadingText: {
+    color: theme.text.secondary,
+    fontSize: '14px',
+    fontWeight: 500,
+    margin: 0,
+  },
+
+  nav: {
+    display: 'flex',
+    background: theme.bg.secondary,
+    borderBottom: `1px solid ${theme.border.default}`,
+    paddingLeft: '0',
+    paddingRight: '0',
+  },
+
+  navButton: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '14px 8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: 600,
+    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+    margin: 0,
+  },
+
+  content: {
+    flex: 1,
+    overflowY: 'auto',
+    overflowX: 'hidden',
+  },
+
+  footer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '14px 16px',
+    background: theme.bg.secondary,
+    borderTop: `1px solid ${theme.border.default}`,
+    fontSize: '11px',
+    color: theme.text.muted,
+    fontWeight: 500,
+  },
+
+  footerDot: {
+    opacity: 0.4,
+  },
 };

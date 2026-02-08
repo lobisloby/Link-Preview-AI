@@ -1,22 +1,61 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Link Preview AI</title><style>/* Critical styles to prevent flash of unstyled content */
-    * {
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Link Preview AI</title><style>* {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     
-    html, body {
-      width: 360px;
-      min-height: 500px;
+    html, body, #root {
+      width: 380px;
+      min-height: 520px;
+      max-height: 600px;
       overflow-x: hidden;
+      background: #0f172a;
     }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
-    #root {
-      width: 360px;
-      min-height: 500px;
-    }</style><script defer="defer" src="popup.js"></script><link href="popup.css" rel="stylesheet"></head><body><div id="root"></div></body></html>
+    /* ===== Custom Scrollbar - Dark Theme ===== */
+    
+    /* Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #475569 #1e293b;
+    }
+    
+    /* Chrome, Edge, Safari */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+      border: 2px solid #1e293b;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    ::-webkit-scrollbar-corner {
+      background: #1e293b;
+    }
+    
+    /* Hide scrollbar but keep functionality (optional - uncomment if you want) */
+    /*
+    .hide-scrollbar::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+    .hide-scrollbar {
+      scrollbar-width: none;
+    }
+    */</style><script defer="defer" src="popup.js"></script><link href="popup.css" rel="stylesheet"></head><body><div id="root"></div></body></html>

@@ -1,16 +1,17 @@
+// src/popup/components/Stats.tsx
 import React from 'react';
 import { UserSubscription } from '@shared/types';
+import { theme } from '@shared/theme';
 import { 
+  BarChart3, 
+  Crown, 
   Clock, 
   Brain, 
   ShieldCheck, 
   Zap, 
-  Star,
-  TrendingUp,
-  Crown,
-  Sparkles,
-  BarChart3
-} from '@shared/components/Icons';
+  ChevronRight,
+  Sparkles
+} from 'lucide-react';
 
 interface StatsProps {
   subscription: UserSubscription | null;
@@ -23,311 +24,396 @@ export const Stats: React.FC<StatsProps> = ({ subscription }) => {
     ? (subscription.previewsUsed / subscription.previewsLimit) * 100
     : 0;
 
-  const getProgressColor = () => {
-    if (usagePercent >= 90) return '#ef4444';
-    if (usagePercent >= 70) return '#f59e0b';
-    return 'url(#gradient)';
+  const getProgressColor = (): string => {
+    if (usagePercent >= 90) return theme.accent.error;
+    if (usagePercent >= 70) return theme.accent.warning;
+    return theme.accent.primary;
   };
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div style={styles.container}>
       {/* Usage Card */}
-      <div 
-        style={{
-          background: 'linear-gradient(135deg, #f0f9ff 0%, #faf5ff 50%, #fdf4ff 100%)',
-          borderRadius: '20px',
-          padding: '20px',
-          marginBottom: '20px',
-          border: '1px solid rgba(14, 165, 233, 0.1)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Background decoration */}
-        <div 
-          style={{
-            position: 'absolute',
-            top: '-30px',
-            right: '-30px',
-            width: '100px',
-            height: '100px',
-            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(192, 38, 211, 0.1))',
-            borderRadius: '50%',
-            filter: 'blur(20px)'
-          }}
-        />
+      <div style={styles.card}>
+        <div style={styles.cardGlow} />
 
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '16px',
-          position: 'relative'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <BarChart3 size={18} color="#0284c7" />
-            <h3 style={{ 
-              fontSize: '15px', 
-              fontWeight: 600, 
-              color: '#1f2937',
-              margin: 0 
-            }}>
-              Today's Usage
-            </h3>
+        <div style={styles.cardHeader}>
+          <div style={styles.cardHeaderLeft}>
+            <div style={styles.iconWrapper}>
+              <BarChart3 size={18} color={theme.accent.primary} />
+            </div>
+            <span style={styles.cardTitle}>Today's Usage</span>
           </div>
-          <span 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '5px 12px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              background: subscription.tier === 'free' 
-                ? 'linear-gradient(135deg, #e5e7eb, #d1d5db)' 
-                : 'linear-gradient(135deg, #fef3c7, #fde68a)',
-              color: subscription.tier === 'free' ? '#4b5563' : '#92400e',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-            }}
-          >
-            {subscription.tier === 'pro' && <Crown size={12} />}
-            {subscription.tier}
+          <span style={{
+            ...styles.badge,
+            background: subscription.tier === 'pro' 
+              ? `linear-gradient(135deg, ${theme.accent.warning}, #f59e0b)` 
+              : theme.bg.tertiary,
+            color: subscription.tier === 'pro' ? '#78350f' : theme.text.secondary,
+          }}>
+            {subscription.tier === 'pro' && <Crown size={10} />}
+            {subscription.tier.toUpperCase()}
           </span>
         </div>
 
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'flex-end', 
-          justifyContent: 'space-between',
-          marginBottom: '14px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ 
-              fontSize: '42px', 
-              fontWeight: 800, 
-              background: 'linear-gradient(135deg, #0284c7, #7c3aed)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              lineHeight: 1 
-            }}>
-              {subscription.previewsUsed}
+        <div style={styles.statsRow}>
+          <div style={styles.statNumber}>
+            <span style={styles.statValue}>{subscription.previewsUsed}</span>
+            <span style={styles.statLimit}>
+              / {subscription.previewsLimit === -1 ? '∞' : subscription.previewsLimit}
             </span>
           </div>
-          <span style={{ 
-            fontSize: '14px', 
-            color: '#6b7280',
-            marginBottom: '8px',
-            fontWeight: 500
-          }}>
-            / {subscription.previewsLimit === -1 ? '∞' : subscription.previewsLimit} previews
-          </span>
+          <span style={styles.statLabel}>previews today</span>
         </div>
 
-        {/* Progress Bar */}
         {subscription.previewsLimit > 0 && (
-          <div 
-            style={{
-              height: '10px',
-              background: '#e5e7eb',
-              borderRadius: '5px',
-              overflow: 'hidden',
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
-            }}
-          >
-            <svg width="0" height="0">
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#0284c7" />
-                  <stop offset="50%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#c026d3" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div 
-              style={{
-                height: '100%',
-                width: `${Math.min(usagePercent, 100)}%`,
-                background: getProgressColor(),
-                borderRadius: '5px',
-                transition: 'width 0.5s ease',
-                boxShadow: '0 0 10px rgba(14, 165, 233, 0.3)'
-              }}
-            />
+          <div style={styles.progressRow}>
+            <div style={styles.progressTrack}>
+              <div 
+                style={{
+                  height: '100%',
+                  width: `${Math.min(usagePercent, 100)}%`,
+                  background: getProgressColor(),
+                  borderRadius: theme.radius.full,
+                  transition: 'width 0.5s ease',
+                  boxShadow: `0 0 12px ${getProgressColor()}60`,
+                }}
+              />
+            </div>
+            <span style={styles.progressPercent}>{Math.round(usagePercent)}%</span>
           </div>
         )}
       </div>
 
       {/* Tips */}
-      <div>
-        <h3 style={{ 
-          fontSize: '15px', 
-          fontWeight: 600, 
-          color: '#1f2937',
-          marginBottom: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <Sparkles size={16} color="#f59e0b" />
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>
+          <Sparkles size={16} color={theme.accent.warning} />
           Quick Tips
         </h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={styles.tipsList}>
           <TipCard
-            icon={<Clock size={22} color="#0284c7" />}
+            icon={<Clock size={18} color={theme.accent.primary} />}
             title="Hover to Preview"
-            description="Simply hover over any link for a moment to see its preview."
-            color="#dbeafe"
+            desc="Hover over any link to see instant previews"
+            accent={theme.accent.primary}
           />
           <TipCard
-            icon={<Brain size={22} color="#7c3aed" />}
+            icon={<Brain size={18} color={theme.accent.secondary} />}
             title="AI-Powered Analysis"
-            description="Get smart summaries using Hugging Face's free API."
-            color="#ede9fe"
+            desc="Smart summaries using advanced AI models"
+            accent={theme.accent.secondary}
           />
           <TipCard
-            icon={<ShieldCheck size={22} color="#059669" />}
+            icon={<ShieldCheck size={18} color={theme.accent.success} />}
             title="Stay Safe Online"
-            description="See reliability scores before clicking unknown links."
-            color="#d1fae5"
+            desc="Reliability scores before clicking links"
+            accent={theme.accent.success}
           />
         </div>
       </div>
 
       {/* Upgrade CTA */}
       {subscription.tier === 'free' && (
-        <div 
-          style={{
-            marginTop: '20px',
-            background: 'linear-gradient(135deg, #0284c7 0%, #7c3aed 50%, #c026d3 100%)',
-            borderRadius: '20px',
-            padding: '20px',
-            color: 'white',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Decorative elements */}
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            opacity: 0.2
-          }}>
-            <Star size={60} />
+        <div style={styles.upgradeCard}>
+          <div style={styles.upgradeGlow} />
+          <div style={styles.upgradeContent}>
+            <div style={styles.upgradeHeader}>
+              <Zap size={20} color={theme.accent.primary} />
+              <h3 style={styles.upgradeTitle}>Upgrade to Pro</h3>
+            </div>
+            <p style={styles.upgradeDesc}>
+              Unlimited previews, advanced AI features & priority support
+            </p>
+            <button style={styles.upgradeButton}>
+              <Crown size={16} />
+              <span>View Plans</span>
+              <ChevronRight size={16} />
+            </button>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Zap size={20} />
-            <h3 style={{ 
-              fontSize: '17px', 
-              fontWeight: 700, 
-              margin: 0
-            }}>
-              Upgrade to Pro
-            </h3>
-          </div>
-          <p style={{ 
-            fontSize: '13px', 
-            opacity: 0.9, 
-            marginBottom: '16px',
-            lineHeight: 1.5
-          }}>
-            Get unlimited previews, advanced AI features, and priority support.
-          </p>
-          <button 
-            style={{
-              width: '100%',
-              padding: '14px',
-              background: 'white',
-              color: '#7c3aed',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-            }}
-          >
-            <Crown size={16} />
-            View Plans
-            <TrendingUp size={16} />
-          </button>
         </div>
       )}
     </div>
   );
 };
 
-// Tip Card Component
 interface TipCardProps {
   icon: React.ReactNode;
   title: string;
-  description: string;
-  color: string;
+  desc: string;
+  accent: string;
 }
 
-const TipCard: React.FC<TipCardProps> = ({ icon, title, description, color }) => (
-  <div 
-    style={{
-      display: 'flex',
-      gap: '14px',
-      padding: '14px',
-      background: color,
-      borderRadius: '14px',
-      alignItems: 'flex-start',
-      transition: 'transform 0.2s',
-      cursor: 'default'
-    }}
-    onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
-    onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}
-  >
+const TipCard: React.FC<TipCardProps> = ({ icon, title, desc, accent }) => (
+  <div style={styles.tipCard}>
     <div style={{
-      width: '40px',
-      height: '40px',
-      borderRadius: '10px',
-      background: 'white',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      flexShrink: 0
+      ...styles.tipIcon,
+      background: `${accent}15`,
+      border: `1px solid ${accent}30`,
     }}>
       {icon}
     </div>
-    <div>
-      <h4 style={{ 
-        fontSize: '14px', 
-        fontWeight: 600, 
-        color: '#111827',
-        marginBottom: '3px'
-      }}>
-        {title}
-      </h4>
-      <p style={{ 
-        fontSize: '12px', 
-        color: '#4b5563',
-        margin: 0,
-        lineHeight: 1.4
-      }}>
-        {description}
-      </p>
+    <div style={styles.tipContent}>
+      <h4 style={styles.tipTitle}>{title}</h4>
+      <p style={styles.tipDesc}>{desc}</p>
     </div>
   </div>
 );
+
+const PADDING_X = '16px';
+
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    padding: `16px ${PADDING_X}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+
+  card: {
+    background: theme.bg.secondary,
+    borderRadius: theme.radius.xl,
+    padding: '20px',
+    border: `1px solid ${theme.border.default}`,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+
+  cardGlow: {
+    position: 'absolute',
+    top: '-60px',
+    right: '-60px',
+    width: '150px',
+    height: '150px',
+    background: `radial-gradient(circle, ${theme.accent.primary}12, transparent 70%)`,
+    borderRadius: '50%',
+    pointerEvents: 'none',
+  },
+
+  cardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '16px',
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  cardHeaderLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+
+  iconWrapper: {
+    width: '36px',
+    height: '36px',
+    background: `${theme.accent.primary}15`,
+    borderRadius: theme.radius.md,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `1px solid ${theme.accent.primary}30`,
+    flexShrink: 0,
+  },
+
+  cardTitle: {
+    fontSize: '14px',
+    fontWeight: 600,
+    color: theme.text.primary,
+  },
+
+  badge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '5px 10px',
+    borderRadius: theme.radius.full,
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.5px',
+    flexShrink: 0,
+  },
+
+  statsRow: {
+    marginBottom: '16px',
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  statNumber: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '6px',
+  },
+
+  statValue: {
+    fontSize: '40px',
+    fontWeight: 800,
+    color: theme.text.primary,
+    lineHeight: 1,
+  },
+
+  statLimit: {
+    fontSize: '16px',
+    color: theme.text.muted,
+    fontWeight: 600,
+  },
+
+  statLabel: {
+    fontSize: '13px',
+    color: theme.text.secondary,
+    fontWeight: 500,
+    marginTop: '4px',
+    display: 'block',
+  },
+
+  progressRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  progressTrack: {
+    flex: 1,
+    height: '8px',
+    background: theme.bg.tertiary,
+    borderRadius: theme.radius.full,
+    overflow: 'hidden',
+  },
+
+  progressPercent: {
+    fontSize: '12px',
+    fontWeight: 600,
+    color: theme.text.secondary,
+    minWidth: '38px',
+    textAlign: 'right',
+    flexShrink: 0,
+  },
+
+  section: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+
+  sectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '14px',
+    fontWeight: 600,
+    color: theme.text.primary,
+    margin: 0,
+  },
+
+  tipsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+
+  tipCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    padding: '14px',
+    background: theme.bg.secondary,
+    borderRadius: theme.radius.lg,
+    border: `1px solid ${theme.border.default}`,
+  },
+
+  tipIcon: {
+    width: '40px',
+    height: '40px',
+    borderRadius: theme.radius.md,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+
+  tipContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  tipTitle: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: theme.text.primary,
+    margin: '0 0 2px 0',
+  },
+
+  tipDesc: {
+    fontSize: '11px',
+    color: theme.text.secondary,
+    margin: 0,
+    lineHeight: 1.4,
+  },
+
+  upgradeCard: {
+    background: theme.bg.secondary,
+    borderRadius: theme.radius.xl,
+    padding: '20px',
+    border: `1px solid ${theme.accent.primary}40`,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+
+  upgradeGlow: {
+    position: 'absolute',
+    top: '-50px',
+    right: '-50px',
+    width: '150px',
+    height: '150px',
+    background: `radial-gradient(circle, ${theme.accent.primary}15, transparent 70%)`,
+    borderRadius: '50%',
+    pointerEvents: 'none',
+  },
+
+  upgradeContent: {
+    position: 'relative',
+    zIndex: 1,
+  },
+
+  upgradeHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '10px',
+  },
+
+  upgradeTitle: {
+    fontSize: '16px',
+    fontWeight: 700,
+    color: theme.text.primary,
+    margin: 0,
+  },
+
+  upgradeDesc: {
+    fontSize: '13px',
+    color: theme.text.secondary,
+    margin: '0 0 16px 0',
+    lineHeight: 1.5,
+  },
+
+  upgradeButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    width: '100%',
+    padding: '14px',
+    background: theme.gradient.primary,
+    color: 'white',
+    border: 'none',
+    borderRadius: theme.radius.lg,
+    fontSize: '14px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: theme.shadow.glow,
+  },
+};
