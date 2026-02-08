@@ -1,6 +1,21 @@
-// src/popup/components/Settings.tsx
 import React, { useState, useEffect } from 'react';
 import { UserSettings, UserSubscription } from '@shared/types';
+import { 
+  Clock, 
+  Eye, 
+  Tag, 
+  Smile, 
+  Layers, 
+  ShieldCheck,
+  Key,
+  Globe,
+  Plus,
+  X,
+  Check,
+  ExternalLink,
+  Lock,
+  Sliders
+} from '@shared/components/Icons';
 
 interface SettingsProps {
   settings: UserSettings;
@@ -15,6 +30,7 @@ export const Settings: React.FC<SettingsProps> = ({
 }) => {
   const [newDomain, setNewDomain] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const isPro = subscription?.tier !== 'free';
 
@@ -47,21 +63,22 @@ export const Settings: React.FC<SettingsProps> = ({
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '14px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  };
-
   return (
     <div style={{ padding: '16px' }}>
       {/* Hover Delay */}
-      <SettingSection title="Hover Delay" description="Time before preview appears">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <SettingSection 
+        icon={<Clock size={18} color="#0284c7" />}
+        title="Hover Delay" 
+        description="Time before preview appears"
+      >
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '16px',
+          background: '#f8fafc',
+          padding: '12px 16px',
+          borderRadius: '12px'
+        }}>
           <input
             type="range"
             min="200"
@@ -73,15 +90,19 @@ export const Settings: React.FC<SettingsProps> = ({
               flex: 1, 
               height: '6px',
               cursor: 'pointer',
-              accentColor: '#0284c7'
+              accentColor: '#0284c7',
+              borderRadius: '3px'
             }}
           />
           <span style={{ 
             fontSize: '14px', 
-            fontWeight: 500, 
-            color: '#374151',
+            fontWeight: 600, 
+            color: '#0284c7',
             minWidth: '60px',
-            textAlign: 'right'
+            textAlign: 'right',
+            background: '#dbeafe',
+            padding: '4px 10px',
+            borderRadius: '8px'
           }}>
             {settings.hoverDelay}ms
           </span>
@@ -89,26 +110,41 @@ export const Settings: React.FC<SettingsProps> = ({
       </SettingSection>
 
       {/* Display Options */}
-      <SettingSection title="Display Options" description="Choose what to show in previews">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <SettingSection 
+        icon={<Sliders size={18} color="#7c3aed" />}
+        title="Display Options" 
+        description="Choose what to show in previews"
+      >
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '3px',
+          background: '#f8fafc',
+          borderRadius: '12px',
+          overflow: 'hidden'
+        }}>
           <ToggleOption
+            icon={<Tag size={16} color="#0284c7" />}
             label="Show Category"
             checked={settings.showCategory}
             onChange={(v) => onUpdate({ showCategory: v })}
           />
           <ToggleOption
+            icon={<Smile size={16} color="#f59e0b" />}
             label="Show Sentiment"
             checked={settings.showSentiment}
             onChange={(v) => onUpdate({ showSentiment: v })}
             locked={!isPro}
           />
           <ToggleOption
+            icon={<Layers size={16} color="#7c3aed" />}
             label="Show Key Points"
             checked={settings.showKeyPoints}
             onChange={(v) => onUpdate({ showKeyPoints: v })}
             locked={!isPro}
           />
           <ToggleOption
+            icon={<ShieldCheck size={16} color="#059669" />}
             label="Show Reliability"
             checked={settings.showReliability}
             onChange={(v) => onUpdate({ showReliability: v })}
@@ -118,73 +154,147 @@ export const Settings: React.FC<SettingsProps> = ({
       </SettingSection>
 
       {/* API Key */}
-      <SettingSection title="Hugging Face API Key" description="Required for AI features">
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="hf_xxxxxxxxxxxx"
-            style={{ ...inputStyle, flex: 1 }}
-          />
+      <SettingSection 
+        icon={<Key size={18} color="#f59e0b" />}
+        title="Hugging Face API Key" 
+        description="Required for AI-powered features"
+      >
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px',
+          marginBottom: '8px'
+        }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <input
+              type={showApiKey ? 'text' : 'password'}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="hf_xxxxxxxxxxxx"
+              style={{
+                width: '100%',
+                padding: '12px 40px 12px 14px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '10px',
+                fontSize: '14px',
+                transition: 'border-color 0.2s',
+                outline: 'none'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#0284c7'}
+              onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+            />
+            <button
+              onClick={() => setShowApiKey(!showApiKey)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#9ca3af',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Eye size={18} />
+            </button>
+          </div>
           <button
             onClick={handleSaveApiKey}
             style={{
-              padding: '10px 16px',
-              background: saved ? '#22c55e' : '#0284c7',
+              padding: '12px 20px',
+              background: saved 
+                ? 'linear-gradient(135deg, #22c55e, #16a34a)' 
+                : 'linear-gradient(135deg, #0284c7, #7c3aed)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '10px',
               fontSize: '14px',
-              fontWeight: 500,
+              fontWeight: 600,
               cursor: 'pointer',
-              whiteSpace: 'nowrap'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
             }}
           >
-            {saved ? '✓ Saved' : 'Save'}
+            {saved ? <Check size={16} /> : null}
+            {saved ? 'Saved!' : 'Save'}
           </button>
         </div>
-        <p style={{ 
-          marginTop: '8px', 
-          fontSize: '12px', 
-          color: '#6b7280' 
-        }}>
-          Get your free key at{' '}
-          <a 
-            href="https://huggingface.co/settings/tokens" 
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#0284c7', textDecoration: 'none' }}
-          >
-            huggingface.co →
-          </a>
-        </p>
+        <a 
+          href="https://huggingface.co/settings/tokens" 
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ 
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px', 
+            color: '#0284c7',
+            textDecoration: 'none',
+            fontWeight: 500
+          }}
+        >
+          Get your free API key
+          <ExternalLink size={12} />
+        </a>
       </SettingSection>
 
       {/* Excluded Domains */}
-      <SettingSection title="Excluded Domains" description="Skip previews for these sites">
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+      <SettingSection 
+        icon={<Globe size={18} color="#ef4444" />}
+        title="Excluded Domains" 
+        description="Skip previews for these sites"
+      >
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          marginBottom: settings.excludedDomains.length > 0 ? '12px' : 0 
+        }}>
           <input
             type="text"
             value={newDomain}
             onChange={(e) => setNewDomain(e.target.value)}
             placeholder="example.com"
-            style={{ ...inputStyle, flex: 1 }}
+            style={{
+              flex: 1,
+              padding: '12px 14px',
+              border: '2px solid #e5e7eb',
+              borderRadius: '10px',
+              fontSize: '14px',
+              outline: 'none',
+              transition: 'border-color 0.2s'
+            }}
             onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+            onFocus={(e) => e.target.style.borderColor = '#0284c7'}
+            onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
           />
           <button
             onClick={handleAddDomain}
+            disabled={!newDomain}
             style={{
-              padding: '10px 16px',
-              background: '#0284c7',
-              color: 'white',
+              padding: '12px 16px',
+              background: newDomain 
+                ? 'linear-gradient(135deg, #0284c7, #7c3aed)' 
+                : '#e5e7eb',
+              color: newDomain ? 'white' : '#9ca3af',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '10px',
               fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer'
+              fontWeight: 600,
+              cursor: newDomain ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s'
             }}
           >
+            <Plus size={16} />
             Add
           </button>
         </div>
@@ -197,28 +307,35 @@ export const Settings: React.FC<SettingsProps> = ({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 10px',
-                  background: '#f3f4f6',
+                  gap: '8px',
+                  padding: '6px 8px 6px 12px',
+                  background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
                   borderRadius: '20px',
                   fontSize: '13px',
-                  color: '#374151'
+                  color: '#b91c1c',
+                  fontWeight: 500
                 }}
               >
                 {domain}
                 <button
                   onClick={() => handleRemoveDomain(domain)}
                   style={{
-                    background: 'none',
+                    background: '#fecaca',
                     border: 'none',
                     cursor: 'pointer',
-                    color: '#9ca3af',
-                    fontSize: '16px',
-                    padding: 0,
-                    lineHeight: 1
+                    color: '#b91c1c',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#fca5a5'}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#fecaca'}
                 >
-                  ×
+                  <X size={12} />
                 </button>
               </span>
             ))}
@@ -231,25 +348,35 @@ export const Settings: React.FC<SettingsProps> = ({
 
 // Setting Section Component
 interface SettingSectionProps {
+  icon: React.ReactNode;
   title: string;
   description: string;
   children: React.ReactNode;
 }
 
-const SettingSection: React.FC<SettingSectionProps> = ({ title, description, children }) => (
+const SettingSection: React.FC<SettingSectionProps> = ({ icon, title, description, children }) => (
   <div style={{ marginBottom: '24px' }}>
-    <h3 style={{ 
-      fontSize: '14px', 
-      fontWeight: 600, 
-      color: '#111827',
-      marginBottom: '4px' 
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '10px',
+      marginBottom: '6px' 
     }}>
-      {title}
-    </h3>
+      {icon}
+      <h3 style={{ 
+        fontSize: '14px', 
+        fontWeight: 600, 
+        color: '#111827',
+        margin: 0
+      }}>
+        {title}
+      </h3>
+    </div>
     <p style={{ 
       fontSize: '12px', 
       color: '#6b7280',
-      marginBottom: '12px' 
+      marginBottom: '12px',
+      marginLeft: '28px'
     }}>
       {description}
     </p>
@@ -259,6 +386,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ title, description, chi
 
 // Toggle Option Component
 interface ToggleOptionProps {
+  icon: React.ReactNode;
   label: string;
   checked: boolean;
   onChange: (value: boolean) => void;
@@ -266,6 +394,7 @@ interface ToggleOptionProps {
 }
 
 const ToggleOption: React.FC<ToggleOptionProps> = ({ 
+  icon,
   label, 
   checked, 
   onChange,
@@ -276,50 +405,70 @@ const ToggleOption: React.FC<ToggleOptionProps> = ({
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'space-between',
-      opacity: locked ? 0.5 : 1
+      padding: '12px 14px',
+      opacity: locked ? 0.6 : 1,
+      background: 'white',
+      transition: 'background 0.2s',
+      cursor: locked ? 'not-allowed' : 'pointer'
     }}
+    onClick={() => !locked && onChange(!checked)}
   >
-    <span style={{ fontSize: '14px', color: '#374151' }}>
-      {label}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {icon}
+      <span style={{ fontSize: '14px', color: '#374151', fontWeight: 500 }}>
+        {label}
+      </span>
       {locked && (
         <span style={{ 
-          marginLeft: '8px', 
-          fontSize: '11px', 
-          color: '#0284c7',
-          fontWeight: 600 
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '2px 8px',
+          background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+          color: '#92400e',
+          fontSize: '10px',
+          fontWeight: 700,
+          borderRadius: '10px',
+          textTransform: 'uppercase'
         }}>
+          <Lock size={10} />
           PRO
         </span>
       )}
-    </span>
-    <button
-      onClick={() => !locked && onChange(!checked)}
-      disabled={locked}
+    </div>
+    <div
       style={{
         position: 'relative',
-        width: '40px',
-        height: '22px',
-        background: checked ? '#0284c7' : '#d1d5db',
-        borderRadius: '11px',
-        border: 'none',
-        cursor: locked ? 'not-allowed' : 'pointer',
-        transition: 'background 0.2s',
-        padding: 0
+        width: '44px',
+        height: '24px',
+        background: checked 
+          ? 'linear-gradient(135deg, #0284c7, #7c3aed)' 
+          : '#d1d5db',
+        borderRadius: '12px',
+        transition: 'all 0.3s',
+        boxShadow: checked 
+          ? '0 0 10px rgba(14, 165, 233, 0.3)' 
+          : 'inset 0 1px 3px rgba(0,0,0,0.1)'
       }}
     >
       <span
         style={{
           position: 'absolute',
           top: '2px',
-          left: checked ? '20px' : '2px',
-          width: '18px',
-          height: '18px',
+          left: checked ? '22px' : '2px',
+          width: '20px',
+          height: '20px',
           background: 'white',
           borderRadius: '50%',
-          transition: 'left 0.2s',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
-      />
-    </button>
+      >
+        {checked && <Check size={12} color="#0284c7" />}
+      </span>
+    </div>
   </div>
 );

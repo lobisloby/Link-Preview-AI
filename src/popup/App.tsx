@@ -6,6 +6,8 @@ import { Stats } from './components/Stats';
 import { Subscription } from './components/Subscription';
 import { UserSettings, UserSubscription } from '@shared/types';
 import { DEFAULT_SETTINGS } from '@shared/constants';
+import { Home, Settings as SettingsIcon, Star } from '@shared/components/Icons';
+
 
 type Tab = 'home' | 'settings' | 'subscription';
 
@@ -94,28 +96,37 @@ export const App: React.FC = () => {
         borderBottom: '1px solid #e5e7eb',
         background: 'white'
       }}>
-        {(['home', 'settings', 'subscription'] as Tab[]).map((tab) => (
+        {[
+          { id: 'home', label: 'Home', icon: <Home size={16} /> },
+          { id: 'settings', label: 'Settings', icon: <SettingsIcon size={16} /> },
+          { id: 'subscription', label: 'Plans', icon: <Star size={16} /> },
+        ].map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as Tab)}
             style={{
               flex: 1,
-              padding: '12px 16px',
-              fontSize: '14px',
-              fontWeight: 500,
-              textTransform: 'capitalize',
+              padding: '14px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
               border: 'none',
               cursor: 'pointer',
               transition: 'all 0.2s',
-              background: activeTab === tab ? 'rgba(14, 165, 233, 0.05)' : 'transparent',
-              color: activeTab === tab ? '#0284c7' : '#6b7280',
-              borderBottom: activeTab === tab ? '2px solid #0284c7' : '2px solid transparent',
+              background: activeTab === tab.id 
+                ? 'linear-gradient(to bottom, rgba(14, 165, 233, 0.05), transparent)' 
+                : 'transparent',
+              color: activeTab === tab.id ? '#0284c7' : '#6b7280',
+              borderBottom: activeTab === tab.id 
+                ? '2px solid #0284c7' 
+                : '2px solid transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
             }}
           >
-            {tab === 'home' && '🏠 '}
-            {tab === 'settings' && '⚙️ '}
-            {tab === 'subscription' && '⭐ '}
-            {tab}
+            {tab.icon}
+            {tab.label}
           </button>
         ))}
       </nav>
