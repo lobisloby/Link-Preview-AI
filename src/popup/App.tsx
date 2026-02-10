@@ -97,7 +97,7 @@ export const App: React.FC = () => {
 
       {/* Content - with custom scrollbar */}
       <div style={styles.content}>
-        {activeTab === 'home' && <Stats subscription={subscription} />}
+        {activeTab === 'home' && <Stats subscription={subscription} onUpgrade={() => setActiveTab('subscription')} />}
         {activeTab === 'settings' && (
           <Settings 
             settings={settings} 

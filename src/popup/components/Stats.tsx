@@ -2,6 +2,8 @@
 import React from 'react';
 import { UserSubscription } from '@shared/types';
 import { theme } from '@shared/theme';
+import { LEMON_SQUEEZY_CONFIG } from '@shared/constants';
+
 import { 
   BarChart3, 
   Crown, 
@@ -10,14 +12,16 @@ import {
   ShieldCheck, 
   Zap, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 
 interface StatsProps {
   subscription: UserSubscription | null;
+  onUpgrade: () => void;
 }
 
-export const Stats: React.FC<StatsProps> = ({ subscription }) => {
+export const Stats: React.FC<StatsProps> = ({ subscription,onUpgrade  }) => {
   if (!subscription) return null;
 
   const usagePercent = subscription.previewsLimit > 0
@@ -113,7 +117,7 @@ export const Stats: React.FC<StatsProps> = ({ subscription }) => {
         </div>
       </div>
 
-      {/* Upgrade CTA */}
+            {/* Upgrade CTA */}
       {subscription.tier === 'free' && (
         <div style={styles.upgradeCard}>
           <div style={styles.upgradeGlow} />
@@ -123,12 +127,26 @@ export const Stats: React.FC<StatsProps> = ({ subscription }) => {
               <h3 style={styles.upgradeTitle}>Upgrade to Pro</h3>
             </div>
             <p style={styles.upgradeDesc}>
-              Unlimited previews, advanced AI features & priority support
+              Get 500 previews/day, sentiment analysis, key points & more
             </p>
-            <button style={styles.upgradeButton}>
+            
+            {/* Direct checkout button */}
+            <button 
+              onClick={() => window.open(LEMON_SQUEEZY_CONFIG.proCheckoutUrl, '_blank')}
+              style={styles.upgradeButton}
+            >
               <Crown size={16} />
-              <span>View Plans</span>
-              <ChevronRight size={16} />
+              <span>Upgrade Now</span>
+              <ExternalLink size={14} />
+            </button>
+
+            {/* Navigate to Plans tab */}
+            <button 
+              onClick={onUpgrade}
+              style={styles.viewPlansLink}
+            >
+              Already have a license key? View Plans
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -400,6 +418,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.5,
   },
 
+  
   upgradeButton: {
     display: 'flex',
     alignItems: 'center',
@@ -415,5 +434,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     cursor: 'pointer',
     boxShadow: theme.shadow.glow,
+  },
+
+  viewPlansLink: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    width: '100%',
+    padding: '10px',
+    marginTop: '8px',
+    background: 'transparent',
+    color: theme.text.secondary,
+    border: 'none',
+    borderRadius: theme.radius.md,
+    fontSize: '12px',
+    fontWeight: 500,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
   },
 };
