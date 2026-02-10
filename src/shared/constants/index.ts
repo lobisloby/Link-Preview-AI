@@ -2,6 +2,9 @@
 
 import type { UserSettings } from '../types';
 
+// ── Import secrets (gitignored) ────────────────────────────────
+export { LEMON_SQUEEZY_CONFIG } from './secrets';
+
 export const HUGGING_FACE_API_URL = 'https://api-inference.huggingface.co/models';
 
 export const MODELS = {
@@ -46,15 +49,7 @@ export const SUBSCRIPTION_LIMITS = {
     features: ['basic_preview', 'category', 'sentiment', 'key_points', 'reliability', 'multi_language'] as string[],
   },
   team: {
-    previewsPerDay: -1, // unlimited
+    previewsPerDay: -1,
     features: ['all'] as string[],
   },
-} as const;
-
-export const LEMON_SQUEEZY_CONFIG = {
-  storeId: 'YOUR_STORE_ID',
-  productId: 'YOUR_PRODUCT_ID',
-  proVariantId: 'YOUR_PRO_VARIANT_ID',
-  teamVariantId: 'YOUR_TEAM_VARIANT_ID',
-  checkoutUrl: 'https://your-store.lemonsqueezy.com/checkout/buy/',
 } as const;

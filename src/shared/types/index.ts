@@ -28,7 +28,7 @@ export type Sentiment = 'positive' | 'neutral' | 'negative' | 'mixed';
 
 export interface UserSettings {
   enabled: boolean;
-  hoverDelay: number; // milliseconds
+  hoverDelay: number;
   showKeyPoints: boolean;
   showCategory: boolean;
   showSentiment: boolean;
@@ -36,7 +36,7 @@ export interface UserSettings {
   theme: 'light' | 'dark' | 'auto';
   language: string;
   excludedDomains: string[];
-  maxCacheAge: number; // hours
+  maxCacheAge: number;
 }
 
 export interface UserSubscription {
@@ -45,6 +45,8 @@ export interface UserSubscription {
   previewsUsed: number;
   previewsLimit: number;
   lemonSqueezyId?: string;
+  licenseKey?: string;      // ← NEW: stored for deactivation / display
+  instanceId?: string;      // ← NEW: stored for deactivation
 }
 
 export interface ApiResponse<T> {
@@ -65,7 +67,9 @@ export type MessageType =
   | 'UPDATE_SETTINGS'
   | 'GET_SETTINGS'
   | 'CHECK_SUBSCRIPTION'
-  | 'INCREMENT_USAGE';
+  | 'INCREMENT_USAGE'
+  | 'ACTIVATE_LICENSE'       // ← NEW
+  | 'DEACTIVATE_LICENSE';    // ← NEW
 
 export interface Message<T = unknown> {
   type: MessageType;
