@@ -7,9 +7,14 @@ export interface LinkPreview {
   keyPoints: string[];
   category: LinkCategory;
   sentiment: Sentiment;
-  reliability: number; // 0-100
+  reliability: number;
   language: string;
   timestamp: number;
+  // ─── NEW optional fields (backward compatible with cache) ───
+  description?: string;
+  image?: string;
+  readingTime?: number;
+  siteName?: string;
 }
 
 export type LinkCategory = 
@@ -45,8 +50,8 @@ export interface UserSubscription {
   previewsUsed: number;
   previewsLimit: number;
   lemonSqueezyId?: string;
-  licenseKey?: string;      // ← NEW: stored for deactivation / display
-  instanceId?: string;      // ← NEW: stored for deactivation
+  licenseKey?: string;
+  instanceId?: string;
 }
 
 export interface ApiResponse<T> {
@@ -68,8 +73,8 @@ export type MessageType =
   | 'GET_SETTINGS'
   | 'CHECK_SUBSCRIPTION'
   | 'INCREMENT_USAGE'
-  | 'ACTIVATE_LICENSE'       // ← NEW
-  | 'DEACTIVATE_LICENSE';    // ← NEW
+  | 'ACTIVATE_LICENSE'
+  | 'DEACTIVATE_LICENSE';
 
 export interface Message<T = unknown> {
   type: MessageType;

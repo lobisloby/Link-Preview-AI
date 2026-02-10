@@ -2,6 +2,14 @@
 import { LinkPreview, LinkCategory, Sentiment } from '../types';
 import { HUGGING_FACE_API_URL, MODELS, CATEGORY_LABELS } from '../constants';
 
+interface PageMetadata {
+  text: string;
+  title: string;
+  description: string;
+  image: string;
+  siteName: string;
+}
+
 export class HuggingFaceService {
   private apiKey: string;
 
@@ -32,10 +40,13 @@ export class HuggingFaceService {
 
   async summarize(text: string): Promise<string> {
     try {
+      // Need at least ~50 chars for meaningful summarization
+      if (text.length < 50) return text;
+
       const result = await this.query<Array<{ summary_text: string }>>(
         MODELS.summarization,
         {
-          inputs: text,
+          inputs: text.slice(0, 3000),
           parameters: {
             max_length: 150,
             min_length: 30,
@@ -56,7 +67,7 @@ export class HuggingFaceService {
         labels: string[];
         scores: number[];
       }>(MODELS.classification, {
-        inputs: text,
+        inputs: text.slice(0, 1000),
         parameters: {
           candidate_labels: CATEGORY_LABELS,
         },
@@ -112,95 +123,209 @@ export class HuggingFaceService {
     return mapping[label] || 'other';
   }
 
+  // ─── Main entry point ──────────────────────────────────────────
   async getFullPreview(url: string, pageContent?: string): Promise<LinkPreview> {
-    const content = pageContent || await this.fetchPageContent(url);
-    
+    // Always fetch metadata (title, image, description, etc.)
+    const metadata = await this.fetchPageContent(url);
+    const content = pageContent || metadata.text;
+
+    // Run AI models in parallel
     const [summary, category, sentiment] = await Promise.all([
       this.summarize(content),
       this.classify(content),
       this.analyzeSentiment(content),
     ]);
 
-    // Extract key points from summary
     const keyPoints = this.extractKeyPoints(summary);
-    
-    // Calculate reliability score based on various factors
     const reliability = this.calculateReliability(url, content);
+    const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
+    // Use metadata.description as fallback if AI summary failed
+    const finalSummary =
+      summary === 'Summary unavailable.' && metadata.description
+        ? metadata.description
+        : summary;
 
     return {
       url,
-      title: this.extractTitle(content) || url,
-      summary,
+      title: metadata.title || this.extractTitle(content) || new URL(url).hostname,
+      summary: finalSummary,
       keyPoints,
       category,
       sentiment,
       reliability,
       language: 'en',
       timestamp: Date.now(),
+      description: metadata.description,
+      image: metadata.image,
+      readingTime,
+      siteName: metadata.siteName,
     };
   }
 
-  private async fetchPageContent(url: string): Promise<string> {
+  // ─── Service-worker-safe HTML fetching + metadata extraction ────
+  private async fetchPageContent(url: string): Promise<PageMetadata> {
+    const empty: PageMetadata = {
+      text: url,
+      title: '',
+      description: '',
+      image: '',
+      siteName: '',
+    };
+
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: { Accept: 'text/html' },
+      });
+
+      if (!response.ok) return empty;
+
       const html = await response.text();
-      
-      // Basic HTML to text extraction
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-      
-      // Remove script and style elements
-      const scripts = tempDiv.querySelectorAll('script, style, nav, footer, header');
-      scripts.forEach(el => el.remove());
-      
-      return tempDiv.textContent?.slice(0, 5000) || '';
-    } catch {
-      return url;
+
+      // ── Extract metadata via regex (works in service worker) ──
+      const title =
+        this.extractMeta(html, 'og:title') ||
+        this.extractTagContent(html, 'title') ||
+        '';
+
+      const description =
+        this.extractMeta(html, 'og:description') ||
+        this.extractMeta(html, 'description') ||
+        this.extractMeta(html, 'twitter:description') ||
+        '';
+
+      let image =
+        this.extractMeta(html, 'og:image') ||
+        this.extractMeta(html, 'twitter:image') ||
+        this.extractMeta(html, 'twitter:image:src') ||
+        '';
+
+      const siteName =
+        this.extractMeta(html, 'og:site_name') ||
+        this.extractMeta(html, 'application-name') ||
+        '';
+
+      // Resolve relative image URLs
+      if (image && !image.startsWith('http')) {
+        try {
+          image = new URL(image, url).href;
+        } catch {
+          image = '';
+        }
+      }
+
+      // ── Strip HTML to plain text (no DOM needed) ──
+      const text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+        .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+        .replace(/<header[\s\S]*?<\/header>/gi, '')
+        .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+        .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 5000);
+
+      return { text, title, description, image, siteName };
+    } catch (error) {
+      console.error('Fetch page error:', error);
+      return empty;
     }
+  }
+
+  // ── Regex-based meta tag extraction ──────────────────────────────
+  private extractMeta(html: string, property: string): string {
+    // property="og:..." or name="description"
+    const patterns = [
+      new RegExp(
+        `<meta[^>]*property=["']${this.escapeRegex(property)}["'][^>]*content=["']([^"']*)["']`,
+        'i'
+      ),
+      new RegExp(
+        `<meta[^>]*name=["']${this.escapeRegex(property)}["'][^>]*content=["']([^"']*)["']`,
+        'i'
+      ),
+      // Reversed attribute order
+      new RegExp(
+        `<meta[^>]*content=["']([^"']*)["'][^>]*property=["']${this.escapeRegex(property)}["']`,
+        'i'
+      ),
+      new RegExp(
+        `<meta[^>]*content=["']([^"']*)["'][^>]*name=["']${this.escapeRegex(property)}["']`,
+        'i'
+      ),
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match?.[1]) return match[1].trim();
+    }
+
+    return '';
+  }
+
+  private extractTagContent(html: string, tag: string): string {
+    const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i');
+    const match = html.match(regex);
+    return match ? match[1].replace(/\s+/g, ' ').trim() : '';
+  }
+
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   private extractTitle(content: string): string {
-    // Try to extract title from content
-    const lines = content.split('\n').filter(line => line.trim());
-    return lines[0]?.slice(0, 100) || '';
+    const lines = content.split('\n').filter(line => line.trim().length > 5);
+    return lines[0]?.slice(0, 120)?.trim() || '';
   }
 
   private extractKeyPoints(summary: string): string[] {
-    // Split summary into sentences and return top 3
-    const sentences = summary.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    return sentences.slice(0, 3).map(s => s.trim());
+    const sentences = summary
+      .split(/[.!?]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 15);
+    return sentences.slice(0, 3);
   }
 
   private calculateReliability(url: string, content: string): number {
-    let score = 50; // Base score
+    let score = 50;
 
-    // Check for HTTPS
     if (url.startsWith('https://')) score += 10;
 
-    // Check for known reliable domains
     const reliableDomains = [
       'wikipedia.org', 'github.com', 'stackoverflow.com',
       'nytimes.com', 'bbc.com', 'reuters.com', 'nature.com',
+      'mozilla.org', 'developer.mozilla.org', 'medium.com',
+      'theguardian.com', 'washingtonpost.com', 'apnews.com',
     ];
-    
+
     try {
       const domain = new URL(url).hostname;
-      if (reliableDomains.some(d => domain.includes(d))) {
-        score += 25;
-      }
+      if (reliableDomains.some(d => domain.includes(d))) score += 25;
+      // Known TLDs get a small boost
+      if (domain.endsWith('.edu') || domain.endsWith('.gov')) score += 15;
     } catch {
-      // Invalid URL, keep base score
+      // Keep base score
     }
 
-    // Content length factor
     if (content.length > 1000) score += 10;
-    if (content.length > 5000) score += 5;
+    if (content.length > 3000) score += 5;
 
     return Math.min(score, 100);
   }
 }
 
-// Factory function for creating service instance
+// ── Factory ──────────────────────────────────────────────────────
 let serviceInstance: HuggingFaceService | null = null;
 
 export async function getHuggingFaceService(): Promise<HuggingFaceService> {
