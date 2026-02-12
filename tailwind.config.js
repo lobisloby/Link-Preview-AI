@@ -1,8 +1,8 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./src/**/*.{js,jsx,ts,tsx,html}",
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.html",
   ],
   theme: {
     extend: {
@@ -32,35 +32,7 @@ module.exports = {
           900: '#701a75',
         },
       },
-      animation: {
-        'fade-in': 'fadeIn 0.2s ease-out',
-        'slide-up': 'slideUp 0.3s ease-out',
-        'pulse-soft': 'pulseSoft 2s infinite',
-        'shimmer': 'shimmer 1.5s infinite',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        pulseSoft: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.7' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
-      },
-      boxShadow: {
-        'tooltip': '0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-        'popup': '0 10px 40px rgba(0, 0, 0, 0.2)',
-      },
     },
   },
   plugins: [],
-}
+};

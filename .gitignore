@@ -1,3 +1,10 @@
-node_modules
-dist
-secrets.ts
+node_modules/
+dist/
+*.zip
+.DS_Store
+Thumbs.db
+*.log
+
+# Environment (if you add any)
+.env
+.env.local
