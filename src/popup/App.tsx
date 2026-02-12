@@ -1,4 +1,3 @@
-// src/popup/App.tsx
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Settings } from './components/Settings';
@@ -50,7 +49,7 @@ export const App: React.FC = () => {
       <div style={styles.loadingContainer}>
         <div style={styles.spinner} />
         <p style={styles.loadingText}>Loading...</p>
-        <style>{scrollbarStyles}</style>
+        <style>{animationStyles}</style>
       </div>
     );
   }
@@ -63,18 +62,19 @@ export const App: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      {/* Inject scrollbar styles */}
-      <style>{scrollbarStyles}</style>
-      
-      {/* Header */}
-      <Header settings={settings} onToggle={updateSettings} />
-      
-      {/* Navigation */}
+      <style>{animationStyles}</style>
+
+      {/* ── Fixed Header ── */}
+      <div style={styles.headerWrapper}>
+        <Header settings={settings} onToggle={updateSettings} />
+      </div>
+
+      {/* ── Fixed Navigation ── */}
       <nav style={styles.nav}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          
+
           return (
             <button
               key={tab.id}
@@ -83,9 +83,9 @@ export const App: React.FC = () => {
                 ...styles.navButton,
                 background: isActive ? `${theme.accent.primary}15` : 'transparent',
                 color: isActive ? theme.accent.primary : theme.text.secondary,
-                borderBottom: isActive 
-                  ? `2px solid ${theme.accent.primary}` 
-                  : `2px solid transparent`,
+                borderBottom: isActive
+                  ? `2px solid ${theme.accent.primary}`
+                  : '2px solid transparent',
               }}
             >
               <Icon size={16} />
@@ -95,12 +95,17 @@ export const App: React.FC = () => {
         })}
       </nav>
 
-      {/* Content - with custom scrollbar */}
+      {/* ── Scrollable Content ── */}
       <div style={styles.content}>
-        {activeTab === 'home' && <Stats subscription={subscription} onUpgrade={() => setActiveTab('subscription')} />}
+        {activeTab === 'home' && (
+          <Stats
+            subscription={subscription}
+            onUpgrade={() => setActiveTab('subscription')}
+          />
+        )}
         {activeTab === 'settings' && (
-          <Settings 
-            settings={settings} 
+          <Settings
+            settings={settings}
             onUpdate={updateSettings}
             subscription={subscription}
           />
@@ -110,7 +115,7 @@ export const App: React.FC = () => {
         )}
       </div>
 
-      {/* Footer */}
+      {/* ── Fixed Footer ── */}
       <footer style={styles.footer}>
         <span>Link Preview AI</span>
         <span style={styles.footerDot}>•</span>
@@ -120,47 +125,38 @@ export const App: React.FC = () => {
   );
 };
 
-// Scrollbar CSS injected via style tag
-const scrollbarStyles = `
-  /* Firefox */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: #475569 #0f172a;
+/* CSS that must live in a <style> tag (keyframes, pseudo-selectors) */
+const animationStyles = `
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
-  
-  /* Chrome, Edge, Safari */
-  ::-webkit-scrollbar {
+
+  /* Scrollbar inside content area */
+  .lp-content::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
   }
-  
-  ::-webkit-scrollbar-track {
-    background: #0f172a;
+  .lp-content::-webkit-scrollbar-track {
+    background: transparent;
   }
-  
-  ::-webkit-scrollbar-thumb {
+  .lp-content::-webkit-scrollbar-thumb {
     background: #334155;
     border-radius: 3px;
   }
-  
-  ::-webkit-scrollbar-thumb:hover {
+  .lp-content::-webkit-scrollbar-thumb:hover {
     background: #475569;
   }
-  
-  ::-webkit-scrollbar-corner {
-    background: #0f172a;
-  }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  /* Nav button hover */
+  .lp-nav-btn:hover {
+    background: ${theme.accent.primary}10 !important;
   }
 `;
 
 const styles: Record<string, React.CSSProperties> = {
+  /* ── Root container: fixed size, column flex ── */
   container: {
     width: '380px',
-    minHeight: '520px',
-    maxHeight: '600px',
+    height: '560px',
     background: theme.bg.primary,
     display: 'flex',
     flexDirection: 'column',
@@ -168,9 +164,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
 
+  /* ── Loading state ── */
   loadingContainer: {
     width: '380px',
-    height: '520px',
+    height: '560px',
     background: theme.bg.primary,
     display: 'flex',
     flexDirection: 'column',
@@ -196,12 +193,21 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
 
+  /* ── Header wrapper: pinned top ── */
+  headerWrapper: {
+    flexShrink: 0,
+    position: 'relative',
+    zIndex: 20,
+  },
+
+  /* ── Navigation: pinned below header ── */
   nav: {
     display: 'flex',
     background: theme.bg.secondary,
     borderBottom: `1px solid ${theme.border.default}`,
-    paddingLeft: '0',
-    paddingRight: '0',
+    flexShrink: 0,
+    position: 'relative',
+    zIndex: 15,
   },
 
   navButton: {
@@ -210,7 +216,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    padding: '14px 8px',
+    padding: '12px 8px',
     border: 'none',
     cursor: 'pointer',
     fontSize: '13px',
@@ -220,23 +226,31 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
   },
 
+  /* ── Scrollable content: fills remaining space ── */
   content: {
     flex: 1,
+    minHeight: 0,          /* ← critical for flex scroll */
     overflowY: 'auto',
     overflowX: 'hidden',
+    position: 'relative',
+    zIndex: 1,
   },
 
+  /* ── Footer: pinned bottom ── */
   footer: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    padding: '14px 16px',
+    padding: '12px 16px',
     background: theme.bg.secondary,
     borderTop: `1px solid ${theme.border.default}`,
     fontSize: '11px',
     color: theme.text.muted,
     fontWeight: 500,
+    flexShrink: 0,
+    position: 'relative',
+    zIndex: 15,
   },
 
   footerDot: {

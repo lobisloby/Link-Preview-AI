@@ -1,4 +1,3 @@
-// src/popup/components/Header.tsx
 import React from 'react';
 import { UserSettings } from '@shared/types';
 import { theme } from '@shared/theme';
@@ -19,13 +18,13 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
       <div style={styles.glowPurple} />
 
       {/* Main Content */}
-      <div style={styles.content}>
+      <div style={styles.mainContent}>
         {/* Logo & Title */}
         <div style={styles.logoSection}>
           <div style={styles.logoContainer}>
-            <img 
-              src={iconUrl} 
-              alt="Link Preview AI" 
+            <img
+              src={iconUrl}
+              alt="Link Preview AI"
               style={styles.logoImage}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -33,13 +32,13 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
               }}
             />
           </div>
-          
+
           <div style={styles.titleSection}>
             <h1 style={styles.title}>
               Link Preview AI
-              <Sparkles 
-                size={14} 
-                color={theme.accent.warning} 
+              <Sparkles
+                size={14}
+                color={theme.accent.warning}
                 fill={theme.accent.warning}
                 style={{ marginLeft: '8px', flexShrink: 0 }}
               />
@@ -47,18 +46,16 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
             <p style={styles.subtitle}>Know before you click</p>
           </div>
         </div>
-        
+
         {/* Toggle Button */}
         <button
           onClick={() => onToggle({ enabled: !settings.enabled })}
           style={{
             ...styles.toggleButton,
-            background: settings.enabled 
+            background: settings.enabled
               ? theme.gradient.primary
               : theme.bg.tertiary,
-            boxShadow: settings.enabled 
-              ? theme.shadow.glow
-              : 'none',
+            boxShadow: settings.enabled ? theme.shadow.glow : 'none',
           }}
         >
           {settings.enabled ? (
@@ -66,10 +63,12 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
           ) : (
             <ZapOff size={16} color={theme.text.muted} />
           )}
-          <span style={{
-            ...styles.toggleText,
-            color: settings.enabled ? 'white' : theme.text.muted,
-          }}>
+          <span
+            style={{
+              ...styles.toggleText,
+              color: settings.enabled ? 'white' : theme.text.muted,
+            }}
+          >
             {settings.enabled ? 'ON' : 'OFF'}
           </span>
         </button>
@@ -78,12 +77,14 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
       {/* Status Bar */}
       <div style={styles.statusBar}>
         <div style={styles.statusLeft}>
-          <span 
+          <span
             style={{
               ...styles.statusDot,
-              background: settings.enabled ? theme.accent.success : theme.text.muted,
-              boxShadow: settings.enabled 
-                ? `0 0 10px ${theme.accent.success}` 
+              background: settings.enabled
+                ? theme.accent.success
+                : theme.text.muted,
+              boxShadow: settings.enabled
+                ? `0 0 10px ${theme.accent.success}`
                 : 'none',
             }}
           />
@@ -94,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({ settings, onToggle }) => {
         <span style={styles.version}>v1.0.0</span>
       </div>
 
-      {/* Bottom Gradient Line */}
+      {/* Bottom Accent Line */}
       <div style={styles.gradientLine} />
     </header>
   );
@@ -108,6 +109,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: `1px solid ${theme.border.default}`,
   },
 
+  /* ── Decorative glows (behind content) ── */
   glowBlue: {
     position: 'absolute',
     top: '-80px',
@@ -117,6 +119,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: `radial-gradient(circle, ${theme.accent.primary}20, transparent 70%)`,
     borderRadius: '50%',
     pointerEvents: 'none',
+    zIndex: 0,
   },
 
   glowPurple: {
@@ -128,15 +131,17 @@ const styles: Record<string, React.CSSProperties> = {
     background: `radial-gradient(circle, ${theme.accent.secondary}15, transparent 70%)`,
     borderRadius: '50%',
     pointerEvents: 'none',
+    zIndex: 0,
   },
 
-  content: {
+  /* ── Main row: logo + toggle ── */
+  mainContent: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '20px 16px',
+    padding: '18px 16px 14px',
     position: 'relative',
-    zIndex: 1,
+    zIndex: 2,
   },
 
   logoSection: {
@@ -148,8 +153,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   logoContainer: {
-    width: '48px',
-    height: '48px',
+    width: '44px',
+    height: '44px',
     background: theme.bg.tertiary,
     borderRadius: theme.radius.lg,
     display: 'flex',
@@ -157,7 +162,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     border: `1px solid ${theme.border.light}`,
     boxShadow: theme.shadow.md,
-    padding: '8px',
+    padding: '7px',
     overflow: 'hidden',
     flexShrink: 0,
   },
@@ -172,12 +177,12 @@ const styles: Record<string, React.CSSProperties> = {
   titleSection: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px',
+    gap: '2px',
     minWidth: 0,
   },
 
   title: {
-    fontSize: '17px',
+    fontSize: '16px',
     fontWeight: 700,
     margin: 0,
     lineHeight: 1.2,
@@ -188,7 +193,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   subtitle: {
-    fontSize: '12px',
+    fontSize: '11px',
     margin: 0,
     color: theme.text.secondary,
     fontWeight: 500,
@@ -198,7 +203,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '10px 16px',
+    padding: '9px 14px',
     border: 'none',
     borderRadius: theme.radius.full,
     cursor: 'pointer',
@@ -214,14 +219,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
   },
 
+  /* ── Status bar ── */
   statusBar: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px 16px',
-    background: theme.bg.primary,
+    padding: '10px 16px',
+    background: `${theme.bg.primary}cc`,
+    backdropFilter: 'blur(8px)',
     position: 'relative',
-    zIndex: 1,
+    zIndex: 2,
+    borderTop: `1px solid ${theme.border.default}`,
   },
 
   statusLeft: {
@@ -251,13 +259,11 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
 
+  /* ── Bottom accent line ── */
   gradientLine: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     height: '2px',
     background: theme.gradient.primary,
-    zIndex: 2,
+    position: 'relative',
+    zIndex: 3,
   },
 };
