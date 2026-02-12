@@ -69,8 +69,13 @@ interface CategoryBadgeProps {
 }
 
 export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category }) => {
+  // Map Tailwind classes to our prefixed classes
+  const colorClass = getCategoryColor(category)
+    .replace('bg-', 'lp-bg-')
+    .replace('text-', '');
+
   return (
-    <span className={`category-badge ${getCategoryColor(category)}`}>
+    <span className={`lp-category ${colorClass}`}>
       {categoryIcons[category]}
       <span>{category}</span>
     </span>

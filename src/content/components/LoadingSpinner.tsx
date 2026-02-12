@@ -1,31 +1,35 @@
 // src/content/components/LoadingSpinner.tsx
 import React from 'react';
 
-export const LoadingSpinner: React.FC = () => (
-  <div className="tooltip-skeleton">
+interface LoadingSpinnerProps {
+  domain?: string;
+}
+
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ domain }) => (
+  <div className="lp-skeleton">
     {/* Image skeleton */}
-    <div className="skeleton-image shimmer" />
+    <div className="lp-skeleton-image lp-shimmer" />
 
     {/* Content skeleton */}
-    <div className="skeleton-body">
-      <div className="skeleton-line skeleton-title shimmer" />
-      <div className="skeleton-line skeleton-text shimmer" />
-      <div className="skeleton-line skeleton-text-short shimmer" />
+    <div className="lp-skeleton-body">
+      <div className="lp-skeleton-line lp-skeleton-title lp-shimmer" />
+      <div className="lp-skeleton-line lp-skeleton-text lp-shimmer" />
+      <div className="lp-skeleton-line lp-skeleton-text-short lp-shimmer" />
 
       {/* Meta skeleton */}
-      <div className="skeleton-meta">
-        <div className="skeleton-badge shimmer" />
-        <div className="skeleton-badge shimmer" />
-        <div className="skeleton-badge shimmer" />
+      <div className="lp-skeleton-meta">
+        <div className="lp-skeleton-badge lp-shimmer" />
+        <div className="lp-skeleton-badge lp-shimmer" />
+        <div className="lp-skeleton-badge lp-shimmer" />
       </div>
     </div>
 
     {/* Status indicator */}
-    <div className="skeleton-status">
-      <div className="analyzing-pulse" />
+    <div className="lp-skeleton-status">
+      <div className="lp-analyzing-pulse" />
       <span>
-        AI is analyzing this link
-        <span className="analyzing-dots" />
+        Analyzing{domain ? ` ${domain}` : ''}
+        <span className="lp-analyzing-dots" />
       </span>
     </div>
   </div>
